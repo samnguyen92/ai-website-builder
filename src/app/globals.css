@@ -1,26 +1,171 @@
-@import "tailwindcss";
+/* ─── @import MUST be first (CSS rule) ──────────────────────────────────────*/
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── SVN-Aeonik Custom Font (files in /public/fonts/) ──────────────────────*/
+@font-face {
+  font-family: 'SVN-Aeonik';
+  src: url('/fonts/Aeonik-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SVN-Aeonik';
+  src: url('/fonts/Aeonik-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Design Tokens ──────────────────────────────────────────────────────────*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-aeonik:         'SVN-Aeonik', 'DM Sans', sans-serif;
+  --font-body:           'Inter', 'DM Sans', sans-serif;
+
+  /* App shell palette */
+  --color-bg:            #121212;
+  --color-accent:        #BD410C;
+  --color-surface:       rgba(255, 255, 255, 0.05);
+  --color-border:        rgba(97, 94, 255, 0.20);
+  --color-input-bg:      rgba(255, 255, 255, 0.10);
+  --color-input-border:  rgba(189, 65, 12, 0.40);
+  --color-text-muted:    rgba(255, 255, 255, 0.60);
+
+  /* AI-generated preview tokens (overridden by ThemeProvider) */
+  --ai-primary:    #1C7ED6;
+  --ai-secondary:  #FFFFFF;
+  --ai-accent:     #1F2937;
+  --ai-bg:         #0f172a;
+  --ai-surface:    #1e293b;
+  --ai-text:       #f8fafc;
+  --ai-text-muted: #94a3b8;
+  --ai-font-heading: 'SVN-Aeonik', 'DM Sans', sans-serif;
+  --ai-font-body:    'DM Sans', sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ─── Base ───────────────────────────────────────────────────────────────────*/
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background-color: var(--color-bg);
+  color: #fff;
+  font-family: var(--font-aeonik);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Noise / grain overlay ──────────────────────────────────────────────────*/
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: soft-light;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ─── Quiz-specific typography classes ───────────────────────────────────────*/
+
+/* 64px / 70.4px / SVN-Aeonik / 400 */
+.q-heading {
+  font-family: var(--font-aeonik);
+  font-size: clamp(36px, 4.44vw, 64px);
+  font-weight: 400;
+  line-height: 1.1;
+  color: #ffffff;
 }
+
+/* 24px / 28.8px / SVN-Aeonik / 400 */
+.q-subtitle {
+  font-family: var(--font-aeonik);
+  font-size: clamp(16px, 1.67vw, 24px);
+  font-weight: 400;
+  line-height: 1.2;
+  color: #ffffff;
+}
+
+/* 40px / 48px / SVN-Aeonik / 400 (buttons) */
+.q-btn-label {
+  font-family: var(--font-aeonik);
+  font-size: clamp(20px, 2.78vw, 40px);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* Shared input / textarea style */
+.q-input {
+  width: 100%;
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
+  border-radius: 12px;
+  padding: 16px;
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 0.2s ease;
+  resize: none;
+}
+.q-input:focus {
+  border-color: rgba(189, 65, 12, 0.80);
+}
+.q-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* Tile buttons */
+.q-tile {
+  position: relative;
+  text-align: left;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  color: white;
+  font-family: var(--font-aeonik);
+  font-size: clamp(16px, 1.25vw, 18px);
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.15s;
+}
+.q-tile:hover:not(:disabled) {
+  border-color: rgba(189, 65, 12, 0.50);
+  background: rgba(255, 255, 255, 0.07);
+}
+.q-tile.selected {
+  background: #BD410C;
+  border-color: #BD410C;
+}
+.q-tile:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Tag pills */
+.q-tag {
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  border: 1px solid rgba(189, 65, 12, 0.40);
+  color: #BD410C;
+  background: rgba(189, 65, 12, 0.10);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.q-tag:hover { background: rgba(189, 65, 12, 0.25); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+
+/* Focus rings */
+:focus-visible { outline: 2px solid #BD410C; outline-offset: 2px; }
