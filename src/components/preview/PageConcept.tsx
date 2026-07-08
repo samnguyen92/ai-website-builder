@@ -1677,12 +1677,24 @@ export function PageConcept({ payload }: Props) {
           {/* Render layout sections dynamically based on AI-generated sitemap structure */}
           <div style={{ display: "flex", flexDirection: "column" }}>
             {pageSections.map((sec, idx) => {
-              // Calculate concept index based on activeTab name + index to rotate dynamically through 3 options
               const conceptIndex = (idx + activeTab.length) % 3;
-              const Renderer = resolveSectionRenderer(sec.name);
+              const sectionStyle: SectionStyle = typeof sec === "string" || !sec?.name
+                ? {
+                    name: (typeof sec === "string" ? sec : "") || "Features Grid",
+                    bg_color: colors.background,
+                    text_color: colors.text,
+                    heading_color: colors.text,
+                    accent_color: colors.accent,
+                    btn_primary_bg: colors.primary,
+                    btn_primary_text: getContrastColor(colors.primary),
+                    btn_secondary_border: colors.text_muted,
+                    btn_secondary_text: colors.text,
+                  }
+                : sec;
+              const Renderer = resolveSectionRenderer(sectionStyle.name);
               return (
                 <div key={idx} style={{ borderBottom: `1px solid ${colors.text_muted}10` }}>
-                  <Renderer conceptIndex={conceptIndex} style={sec} />
+                  <Renderer conceptIndex={conceptIndex} style={sectionStyle} />
                 </div>
               );
             })}
