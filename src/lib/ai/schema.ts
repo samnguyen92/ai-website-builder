@@ -177,6 +177,7 @@ export const AIOutputSchema = z.object({
       google_font_url: z.string().url(),
     }),
   }),
+  icon_style: z.string().optional().default("duotone-colored"),
   icon_set: z.array(z.object({
     label: z.string(),
     symbol: z.string(),

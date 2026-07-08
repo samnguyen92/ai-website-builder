@@ -286,22 +286,56 @@ export function StyleGuidePanel({ payload }: Props) {
 
         {/* ── Icons ───────────────────────────────────────────────────────*/}
         <Cell style={{ borderRight: themeBorder }}>
-          <SectionLabel>Icons</SectionLabel>
+          <SectionLabel>Icons {payload.icon_style ? `(${payload.icon_style})` : ""}</SectionLabel>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-            {(icon_set ?? []).slice(0, 9).map((icon) => (
-              <div key={icon.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 10,
-                  background: `${colors.primary}18`,
-                  border: `1px solid ${colors.primary}30`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 22,
-                }}>
-                  {icon.symbol}
+            {(icon_set ?? []).slice(0, 9).map((icon) => {
+              // Dynamic icon styling
+              let iconBg = `${colors.primary}18`;
+              let iconBorder = `1px solid ${colors.primary}30`;
+              let iconColor = colors.primary;
+              let backdropFilter = "none";
+
+              const style = payload.icon_style || "duotone-colored";
+              if (style === "minimal-line") {
+                iconBg = "transparent";
+                iconBorder = `1px solid ${colors.text_muted}44`;
+                iconColor = colors.text;
+              } else if (style === "solid-bold") {
+                iconBg = colors.accent;
+                iconBorder = "none";
+                iconColor = "#ffffff";
+              } else if (style === "glassmorphic") {
+                iconBg = "rgba(255, 255, 255, 0.05)";
+                backdropFilter = "blur(4px)";
+                iconBorder = "1px solid rgba(255, 255, 255, 0.1)";
+                iconColor = colors.text;
+              } else if (style === "duotone-colored") {
+                iconBg = `${colors.accent}18`;
+                iconBorder = `1.5px solid ${colors.accent}30`;
+                iconColor = colors.accent;
+              }
+
+              return (
+                <div key={icon.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                  <div style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 10,
+                    background: iconBg,
+                    border: iconBorder,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 22,
+                    color: iconColor,
+                    backdropFilter,
+                  }}>
+                    {icon.symbol}
+                  </div>
+                  <p style={{ fontSize: 10, color: themeMutedText, textAlign: "center", fontWeight: 500 }}>{icon.label}</p>
                 </div>
-                <p style={{ fontSize: 10, color: themeMutedText, textAlign: "center", fontWeight: 500 }}>{icon.label}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Cell>
 

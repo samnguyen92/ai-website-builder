@@ -36,22 +36,8 @@ You must return a single valid JSON object containing only a "sitemap" array whe
 
 CRITICAL STRUCTURAL CONSTRAINTS:
 1. Diversity of Layout: You must ensure a high-fidelity layout. No two adjacent sections on any page should be of the same type.
-2. For example, never place "Features Grid" directly next to "Features Grid" or "Services List". Insert a divider section like "Stats", "CTA Banner", or "Testimonials" in between to create a balanced rhythm.
-3. Available section types:
-   - "Hero"
-   - "Features Grid"
-   - "Pricing"
-   - "FAQ"
-   - "Testimonials"
-   - "CTA Banner"
-   - "Gallery"
-   - "Team"
-   - "Stats"
-   - "Contact Form"
-   - "Services List"
-   - "Map / Location"
-   - "Blog Grid"
-   - "Shop Product Grid"`;
+2. For example, never place two similar card grids next to each other. Insert a divider section like a Stats count, a CTA Banner, or a Testimonial slider in between to create a balanced rhythm.
+3. Creative Section Selection: Do not restrict yourself to generic section names. Design custom, specific section names tailored to the business offerings (e.g. "Photography Portfolio Gallery", "Pricing Memberships", "Classes Catalog", "Services List", "Team Bios", "FAQ Outlines", "Contact Form", "Hero Banner", "Stats Counters", "CTA Banner"). Every page should end with a footer section or map where appropriate.`;
 }
 
 export function buildWireframeUserPrompt(quiz: QuizPayload): string {
@@ -149,6 +135,7 @@ Return ONLY a valid JSON object matching the following structure (no markdown wr
       "google_font_url": "https://fonts.googleapis.com/css2?family=..."
     }
   },
+  "icon_style": "duotone-colored",
   "icon_set": [
     { "label": "About", "symbol": "🏛️" },
     { "label": "Services", "symbol": "⚡" },
@@ -161,7 +148,9 @@ Return ONLY a valid JSON object matching the following structure (no markdown wr
   ],
   "tagline": "A punchy brand one-liner",
   "vibe_summary": "Description of why these colors/fonts represent the brand."
-}`;
+}
+
+IMPORTANT: Select an "icon_style" from one of: "duotone-colored", "minimal-line", "solid-bold", or "glassmorphic" based on the aesthetic direction.`;
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -177,7 +166,10 @@ CRITICAL STYLING CONTRAST RULES:
 1. Readability: For every section, the text_color and heading_color MUST have high contrast against the bg_color. Never use dark text on dark backgrounds, or white text on white backgrounds.
 2. Dark Sections: If a section has a dark bg_color (like primary/dark colors), then heading_color and text_color MUST be light (like white #ffffff or light gray).
 3. Buttons: btn_primary_text must have high contrast against btn_primary_bg. btn_secondary_text must contrast against bg_color.
-4. Coherence: Colors generated per section must match the stylistic tokens provided in the prompt.`;
+4. Coherence: Colors generated per section must match the stylistic tokens provided in the prompt.
+5. Card Container Legibility: Inside the page sections, card-like containers will be rendered with translucent dark surfaces (for dark backgrounds) or solid light surfaces (for light backgrounds). Therefore:
+   - If bg_color is dark, text_color and heading_color must be light/white so they show up clearly.
+   - If bg_color is light, text_color and heading_color must be dark/charcoal so they show up clearly.`;
 }
 
 export function buildSectionStylerUserPrompt(quiz: QuizPayload, wireframeJson: string, styleJson: string): string {
