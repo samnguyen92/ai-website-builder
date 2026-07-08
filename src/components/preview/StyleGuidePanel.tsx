@@ -138,38 +138,34 @@ export function StyleGuidePanel({ payload }: Props) {
         {/* ── Logo ────────────────────────────────────────────────────────*/}
         <Cell style={{ borderRight: themeBorder }}>
           <SectionLabel>Logo</SectionLabel>
-          {/* Wordmark */}
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
             <div style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 10,
+              justifyContent: "center",
               background: colors.background,
               border: isLightColor(colors.background) ? `1px solid ${borderColor}` : "none",
               borderRadius: 10,
-              padding: "10px 14px"
+              padding: "14px"
             }}>
               {payload.logo_url ? (
                 <img
                   src={payload.logo_url}
                   alt={`${business_name} logo`}
-                  style={{ width: 32, height: 32, borderRadius: 8, objectFit: "contain", background: "white" }}
+                  style={{ width: 44, height: 44, borderRadius: 8, objectFit: "contain", background: "white" }}
                 />
               ) : (
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: colors.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ color: getContrastColor(colors.primary), fontWeight: 700, fontSize: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 8, background: colors.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ color: getContrastColor(colors.primary), fontWeight: 700, fontSize: 18 }}>
                     {(business_name || "?").charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
-              <span style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 15, color: colors.text }}>
-                {business_name}
-              </span>
             </div>
           </div>
 
           <SectionLabel>Logo Variation</SectionLabel>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {[
               { bg: colors.primary, text: getContrastColor(colors.primary), label: "On Primary" },
               { bg: colors.background, text: colors.text, label: "On Light" },
@@ -179,24 +175,23 @@ export function StyleGuidePanel({ payload }: Props) {
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 8,
+                  justifyContent: "center",
                   background: v.bg,
                   border: isLightColor(v.bg) ? `1px solid ${borderColor}` : "none",
                   borderRadius: 8,
-                  padding: "7px 12px"
+                  padding: "10px"
                 }}>
                 {payload.logo_url ? (
                   <img
                     src={payload.logo_url}
                     alt={`${business_name} logo variation`}
-                    style={{ width: 22, height: 22, borderRadius: 5, objectFit: "contain", background: "white" }}
+                    style={{ width: 28, height: 28, borderRadius: 5, objectFit: "contain", background: "white" }}
                   />
                 ) : (
-                  <div style={{ width: 22, height: 22, borderRadius: 5, background: isLightColor(v.bg) ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ color: v.text, fontWeight: 700, fontSize: 10 }}>{(business_name || "?").charAt(0)}</span>
+                  <div style={{ width: 28, height: 28, borderRadius: 5, background: isLightColor(v.bg) ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ color: v.text, fontWeight: 700, fontSize: 12 }}>{(business_name || "?").charAt(0)}</span>
                   </div>
                 )}
-                <span style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 11, color: v.text }}>{business_name}</span>
               </div>
             ))}
           </div>

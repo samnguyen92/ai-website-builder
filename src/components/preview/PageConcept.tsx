@@ -1834,9 +1834,6 @@ export function PageConcept({ payload }: Props) {
             })}
           </div>
 
-          {/* Appended Footer Concept Layout */}
-          <RenderFooter conceptIndex={(activeTab.length + 1) % 2} />
-
         </div>
       </div>
     </div>

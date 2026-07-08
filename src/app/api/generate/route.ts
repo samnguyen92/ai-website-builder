@@ -58,6 +58,8 @@ async function generateLLMText({
         response_format: responseFormat,
         temperature,
         messages,
+      }, {
+        timeout: 12000, // 12 seconds timeout to prevent hanging on slow queues
       });
       const content = completion.choices[0]?.message?.content;
       if (content) {
@@ -125,7 +127,7 @@ async function generateLogo(businessName: string): Promise<string | null> {
     "black-forest-labs/flux.2-flex",
   ];
   return callOpenRouterImageAPI(
-    `A beautiful clean flat vector logo mark for a company named "${businessName}". Premium UI branding icon, minimal geometry, high quality, solid white background, no text.`,
+    `A beautiful clean flat vector logo icon, visual symbol representing a company named "${businessName}". Minimal geometry, high quality, solid white background. Do not write any text, words, or letters.`,
     models
   );
 }
