@@ -54,13 +54,12 @@ export function PageConcept({ payload }: Props) {
     const isDarkSection = !isLightColor(sectionBg);
     const bg = isDarkSection ? "rgba(255,255,255,0.06)" : colors.surface;
     const border = isDarkSection ? "1px solid rgba(255,255,255,0.12)" : `1px solid ${colors.text_muted}15`;
-    const isDarkCard = !isLightColor(bg);
 
     return {
       bg,
       border,
-      heading: isDarkCard ? "#ffffff" : colors.text,
-      text: isDarkCard ? "rgba(255,255,255,0.70)" : colors.text_muted,
+      heading: isDarkSection ? "#ffffff" : colors.text,
+      text: isDarkSection ? "rgba(255,255,255,0.70)" : colors.text_muted,
     };
   }
 
