@@ -151,7 +151,7 @@ function ErrorState({ message }: { message: string | null }) {
 /* ─── Preview page ───────────────────────────────────────────────────────────*/
 export default function PreviewPage({ params }: { params: Promise<{ leadId: string }> }) {
   const { leadId } = use(params);
-  const { status, payload, errorMessage, regenerateCount } = useGenerationStatus(leadId);
+  const { status, payload, errorMessage, regenerateCount, refetch } = useGenerationStatus(leadId);
   const [currentStep, setCurrentStep] = useState<number>(0);
 
   // Trigger the step-by-step generation process on loading page mount if state is pending
@@ -195,13 +195,13 @@ export default function PreviewPage({ params }: { params: Promise<{ leadId: stri
             if (!res3.ok) throw new Error("Step 3 (Copywriting Content) failed");
           }
 
-          // Step 4: Section Coder
+          // Step 4: Section Coder (Codes "home" page sections first)
           if (!isAborted) {
             setCurrentStep(3);
             const res4 = await fetch("/api/generate", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ leadId, step: 4 }),
+              body: JSON.stringify({ leadId, step: 4, page: "home" }),
             });
             if (!res4.ok) throw new Error("Step 4 (Section Coder) failed");
           }
@@ -393,7 +393,7 @@ export default function PreviewPage({ params }: { params: Promise<{ leadId: stri
             <h2 style={{ fontSize: 28, fontWeight: 400, color: "#fff", marginBottom: 8 }}>Simple Page Concepts</h2>
             <p style={{ fontSize: 13, color: "rgba(255,255,255,0.40)", marginBottom: 24 }}>These are early low-fidelity page concepts.</p>
 
-            <PageConcept payload={payload} />
+            <PageConcept payload={payload} leadId={leadId} refetchStatus={refetch} />
           </section>
 
           {/* SECTION 4: Refinement Panel / Comments & Regenerate (at the bottom) */}

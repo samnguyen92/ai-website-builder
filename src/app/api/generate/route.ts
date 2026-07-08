@@ -233,9 +233,8 @@ export async function POST(req: NextRequest) {
         else if (step === 3) {
           console.log(`[generate] Step 3 starting for lead ${targetLeadId}: Content Copywriter`);
           const wireframeRaw = aiData.wireframe_raw;
-          const styleRaw = aiData.style_raw;
-          if (!wireframeRaw || !styleRaw) {
-            return NextResponse.json({ error: "Missing step 1 or step 2 data" }, { status: 400 });
+          if (!wireframeRaw) {
+            return NextResponse.json({ error: "Missing step 1 sitemap wireframe data" }, { status: 400 });
           }
 
           const stylerRaw = await generateLLMText({
@@ -243,7 +242,7 @@ export async function POST(req: NextRequest) {
             responseFormat: { type: "json_object" },
             messages: [
               { role: "system", content: buildSectionStylerSystemPrompt() },
-              { role: "user",   content: buildSectionStylerUserPrompt(quizPayload, wireframeRaw, styleRaw) },
+              { role: "user",   content: buildSectionStylerUserPrompt(quizPayload, wireframeRaw) },
             ],
           });
           const stylerParsed = JSON.parse(stylerRaw);
@@ -261,11 +260,52 @@ export async function POST(req: NextRequest) {
         }
 
         else if (step === 4) {
-          console.log(`[generate] Step 4 starting for lead ${targetLeadId}: Section Coder`);
+          const pageSlug = (body.page || "home").toLowerCase();
+          console.log(`[generate] Step 4 starting for lead ${targetLeadId}: Section Coder for page: ${pageSlug}`);
           const stylerRaw = aiData.styler_raw;
           const styleRaw = aiData.style_raw;
           if (!stylerRaw || !styleRaw) {
             return NextResponse.json({ error: "Missing content styler or style data" }, { status: 400 });
+          }
+
+          const stylerParsed = JSON.parse(stylerRaw);
+          const sitemap = stylerParsed.sitemap || [];
+          const pageNode = sitemap.find((node: any) => node.slug.toLowerCase() === pageSlug);
+
+          if (!pageNode) {
+            console.warn(`[generate] Page slug ${pageSlug} not found in sitemap. Available slugs:`, sitemap.map((n: any) => n.slug));
+            return NextResponse.json({ error: `Page ${pageSlug} not found in sitemap` }, { status: 404 });
+          }
+
+          // Extract only the copywriting copy needed for this page to minimize prompt tokens
+          const pageCopy: any = {};
+          const demoContent = aiData.demo_content || {};
+          
+          // Basic copy fields always useful
+          if (demoContent.hero) pageCopy.hero = demoContent.hero;
+          if (demoContent.cta) pageCopy.cta = demoContent.cta;
+
+          for (const sec of pageNode.sections) {
+            const key = sec.name.toLowerCase();
+            if (demoContent[key]) {
+              pageCopy[key] = demoContent[key];
+            } else if (key.includes("feature") && demoContent.features) {
+              pageCopy.features = demoContent.features;
+            } else if (key.includes("service") && demoContent.services) {
+              pageCopy.services = demoContent.services;
+            } else if (key.includes("price") && demoContent.pricing) {
+              pageCopy.pricing = demoContent.pricing;
+            } else if (key.includes("faq") && demoContent.faq) {
+              pageCopy.faq = demoContent.faq;
+            } else if (key.includes("team") && demoContent.team) {
+              pageCopy.team = demoContent.team;
+            } else if (key.includes("blog") && demoContent.blog) {
+              pageCopy.blog = demoContent.blog;
+            } else if (key.includes("testimonial") && demoContent.testimonials) {
+              pageCopy.testimonials = demoContent.testimonials;
+            } else if (key.includes("product") && demoContent.products) {
+              pageCopy.products = demoContent.products;
+            }
           }
 
           const coderRaw = await generateLLMText({
@@ -273,19 +313,33 @@ export async function POST(req: NextRequest) {
             responseFormat: { type: "json_object" },
             messages: [
               { role: "system", content: buildSectionCoderSystemPrompt() },
-              { role: "user",   content: buildSectionCoderUserPrompt(quizPayload, stylerRaw, styleRaw, JSON.stringify(aiData.demo_content || {})) },
+              { role: "user",   content: buildSectionCoderUserPrompt(
+                  quizPayload,
+                  pageSlug,
+                  JSON.stringify(pageNode.sections),
+                  styleRaw,
+                  JSON.stringify(pageCopy)
+                ) 
+              },
             ],
           });
           const coderParsed = JSON.parse(coderRaw);
 
-          aiData.custom_code = coderParsed.custom_code || {};
+          if (!aiData.custom_code) {
+            aiData.custom_code = {};
+          }
+          // Merge page-specific custom code blocks into the main ai_payload custom_code dictionary
+          const newCode = coderParsed.custom_code || {};
+          for (const [idx, codeMarkup] of Object.entries(newCode)) {
+            aiData.custom_code[`${pageSlug}_${idx}`] = codeMarkup;
+          }
 
           await supabase
             .from("leads")
             .update({ ai_payload: aiData })
             .eq("id", targetLeadId);
 
-          return NextResponse.json({ success: true });
+          return NextResponse.json({ success: true, custom_code: aiData.custom_code });
         }
 
         else if (step === 5) {
@@ -341,7 +395,13 @@ export async function POST(req: NextRequest) {
           // Finalize lead record
           await supabase
             .from("leads")
-            .update({ status: "complete", ai_payload: validated.data })
+            .update({ 
+              status: "complete", 
+              ai_payload: {
+                ...aiData,
+                ...validated.data
+              }
+            })
             .eq("id", targetLeadId);
 
           console.log(`[generate] Lead ${targetLeadId} successfully finalized via step sequence`);
@@ -530,7 +590,7 @@ export async function POST(req: NextRequest) {
             responseFormat: { type: "json_object" },
             messages: [
               { role: "system", content: buildSectionStylerSystemPrompt() },
-              { role: "user",   content: buildSectionStylerUserPrompt(quiz, wireframeRaw, styleRaw) },
+              { role: "user",   content: buildSectionStylerUserPrompt(quiz, wireframeRaw) },
             ],
           });
           const stylerParsed = JSON.parse(stylerRaw);
@@ -540,16 +600,34 @@ export async function POST(req: NextRequest) {
           // AGENT 4: Section Coder Agent (Dynamic Inline Styled HTML/CSS Layouts)
           // ==========================================
           console.log(`[generate] starting Agent 4: Section Coder Agent`);
+          const sitemap = stylerParsed.sitemap || [];
+          const homeNode = sitemap.find((node: any) => node.slug.toLowerCase() === "home") || sitemap[0];
+          const homeSections = homeNode ? homeNode.sections : [];
+
           const coderRaw = await generateLLMText({
             temperature: 0.5,
             responseFormat: { type: "json_object" },
             messages: [
               { role: "system", content: buildSectionCoderSystemPrompt() },
-              { role: "user",   content: buildSectionCoderUserPrompt(quiz, stylerRaw, styleRaw, JSON.stringify(stylerParsed.demo_content || {})) },
+              { role: "user",   content: buildSectionCoderUserPrompt(
+                  quiz,
+                  "home",
+                  JSON.stringify(homeSections),
+                  styleRaw,
+                  JSON.stringify(stylerParsed.demo_content || {})
+                ) 
+              },
             ],
           });
           const coderParsed = JSON.parse(coderRaw);
           console.log(`[generate] Agent 4 coding complete`);
+
+          const customCodeMap: any = {};
+          if (coderParsed.custom_code) {
+            for (const [idx, codeMarkup] of Object.entries(coderParsed.custom_code)) {
+              customCodeMap[`home_${idx}`] = codeMarkup;
+            }
+          }
 
           // Merge all results into final parsed payload
           const finalParsed = {
@@ -562,7 +640,7 @@ export async function POST(req: NextRequest) {
             vibe_summary: styleParsed.vibe_summary || "",
             sitemap: stylerParsed.sitemap || [],
             demo_content: stylerParsed.demo_content || {},
-            custom_code: coderParsed.custom_code || {},
+            custom_code: customCodeMap,
           };
 
           // Validate against expanded Zod schema

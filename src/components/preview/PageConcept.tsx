@@ -5,6 +5,8 @@ import type { AIOutput } from "@/lib/ai/schema";
 
 interface Props {
   payload: AIOutput;
+  leadId: string;
+  refetchStatus: () => Promise<any>;
 }
 
 interface SectionStyle {
@@ -41,9 +43,10 @@ function getContrastColor(hex: string): string {
   return isLightColor(hex) ? "#121212" : "#ffffff";
 }
 
-export function PageConcept({ payload }: Props) {
+export function PageConcept({ payload, leadId, refetchStatus }: Props) {
   const { colors, typography, sitemap, tagline, business_name, logo_url, hero_image_url, moodboard_images, demo_content } = payload;
   const [activeTab, setActiveTab] = useState(sitemap[0]?.slug || "home");
+  const [tabLoading, setTabLoading] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
 
   const currentTab = sitemap.find((p) => p.slug === activeTab) || sitemap[0];
@@ -1676,6 +1679,39 @@ export function PageConcept({ payload }: Props) {
     return RenderFeaturesGrid;
   }
 
+  const handleTabClick = async (slug: string) => {
+    if (tabLoading) return;
+    
+    // Check if code has been generated for this page slug
+    const hasCode = Object.keys(payload.custom_code || {}).some(
+      (key) => key.startsWith(`${slug.toLowerCase()}_`)
+    );
+
+    if (hasCode) {
+      setActiveTab(slug);
+      return;
+    }
+
+    setTabLoading(true);
+    setActiveTab(slug);
+    try {
+      console.log(`[PageConcept] Lazy generating code for page: ${slug}`);
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId, step: 4, page: slug }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to generate code for page");
+      }
+      await refetchStatus();
+    } catch (err) {
+      console.error("[PageConcept] Lazy coding failed:", err);
+    } finally {
+      setTabLoading(false);
+    }
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, width: "100%" }}>
 
@@ -1686,7 +1722,7 @@ export function PageConcept({ payload }: Props) {
           return (
             <button
               key={page.slug}
-              onClick={() => setActiveTab(page.slug)}
+              onClick={() => handleTabClick(page.slug)}
               style={{
                 padding: "12px 28px",
                 borderRadius: 9999,
@@ -1796,43 +1832,65 @@ export function PageConcept({ payload }: Props) {
           </nav>
 
           {/* Render layout sections dynamically based on AI-generated sitemap structure */}
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {pageSections.map((sec, idx) => {
-              const sectionKey = `${activeTab}_${idx}`;
-              const customHtml = payload.custom_code?.[sectionKey];
+          {tabLoading ? (
+            <div style={{ padding: "80px 40px", display: "flex", flexDirection: "column", gap: 32, alignItems: "center" }}>
+              <div style={{ width: "60%", height: 36, background: "rgba(255,255,255,0.06)", borderRadius: 6, animation: "skeletonPulse 1.5s infinite alternate" }} />
+              <div style={{ width: "40%", height: 20, background: "rgba(255,255,255,0.04)", borderRadius: 4, animation: "skeletonPulse 1.5s infinite alternate" }} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, width: "100%", marginTop: 40 }}>
+                {[1, 2, 3].map((n) => (
+                  <div key={n} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24, height: 180, display: "flex", flexDirection: "column", gap: 16 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.06)", animation: "skeletonPulse 1.5s infinite alternate" }} />
+                    <div style={{ width: "80%", height: 20, background: "rgba(255,255,255,0.06)", borderRadius: 4, animation: "skeletonPulse 1.5s infinite alternate" }} />
+                    <div style={{ width: "100%", height: 12, background: "rgba(255,255,255,0.04)", borderRadius: 3, animation: "skeletonPulse 1.5s infinite alternate" }} />
+                  </div>
+                ))}
+              </div>
+              <style>{`
+                @keyframes skeletonPulse {
+                  from { opacity: 0.4; }
+                  to { opacity: 0.8; }
+                }
+              `}</style>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {pageSections.map((sec, idx) => {
+                const sectionKey = `${activeTab}_${idx}`;
+                const customHtml = payload.custom_code?.[sectionKey];
 
-              if (customHtml) {
+                if (customHtml) {
+                  return (
+                    <div
+                      key={idx}
+                      style={{ borderBottom: `1px solid ${colors.text_muted}10` }}
+                      dangerouslySetInnerHTML={{ __html: customHtml }}
+                    />
+                  );
+                }
+
+                const conceptIndex = (idx + activeTab.length) % 3;
+                const sectionStyle: SectionStyle = typeof sec === "string" || !sec?.name
+                  ? {
+                      name: (typeof sec === "string" ? sec : "") || "Features Grid",
+                      bg_color: colors.background,
+                      text_color: colors.text,
+                      heading_color: colors.text,
+                      accent_color: colors.accent,
+                      btn_primary_bg: colors.primary,
+                      btn_primary_text: getContrastColor(colors.primary),
+                      btn_secondary_border: colors.text_muted,
+                      btn_secondary_text: colors.text,
+                    }
+                  : sec;
+                const Renderer = resolveSectionRenderer(sectionStyle.name);
                 return (
-                  <div
-                    key={idx}
-                    style={{ borderBottom: `1px solid ${colors.text_muted}10` }}
-                    dangerouslySetInnerHTML={{ __html: customHtml }}
-                  />
+                  <div key={idx} style={{ borderBottom: `1px solid ${colors.text_muted}10` }}>
+                    <Renderer conceptIndex={conceptIndex} style={sectionStyle} />
+                  </div>
                 );
-              }
-
-              const conceptIndex = (idx + activeTab.length) % 3;
-              const sectionStyle: SectionStyle = typeof sec === "string" || !sec?.name
-                ? {
-                    name: (typeof sec === "string" ? sec : "") || "Features Grid",
-                    bg_color: colors.background,
-                    text_color: colors.text,
-                    heading_color: colors.text,
-                    accent_color: colors.accent,
-                    btn_primary_bg: colors.primary,
-                    btn_primary_text: getContrastColor(colors.primary),
-                    btn_secondary_border: colors.text_muted,
-                    btn_secondary_text: colors.text,
-                  }
-                : sec;
-              const Renderer = resolveSectionRenderer(sectionStyle.name);
-              return (
-                <div key={idx} style={{ borderBottom: `1px solid ${colors.text_muted}10` }}>
-                  <Renderer conceptIndex={conceptIndex} style={sectionStyle} />
-                </div>
-              );
-            })}
-          </div>
+              })}
+            </div>
+          )}
 
         </div>
       </div>

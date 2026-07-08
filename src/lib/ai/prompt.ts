@@ -158,7 +158,7 @@ IMPORTANT: Select an "icon_style" from one of: "duotone-colored", "minimal-line"
 // ═════════════════════════════════════════════════════════════════════════════
 
 export function buildSectionStylerSystemPrompt(): string {
-  return `You are a Senior UI Engineer and Website Copywriter. Your task is to review the sitemap structure and styling tokens, then output:
+  return `You are a Senior UI Engineer and Website Copywriter. Your task is to review the sitemap structure, then output:
 1. "sitemap": An updated sitemap array where each section in a page has an explicit, contrast-safe color scheme (bg_color, text_color, heading_color, accent_color, and button colors) selected contextually.
 2. "demo_content": Highly customized real marketing copy, headlines, features, pricing items, FAQs, and testimonials specific to this business (no lorem-ipsum!).
 
@@ -166,20 +166,16 @@ CRITICAL STYLING CONTRAST RULES:
 1. Readability: For every section, the text_color and heading_color MUST have high contrast against the bg_color. Never use dark text on dark backgrounds, or white text on white backgrounds.
 2. Dark Sections: If a section has a dark bg_color (like primary/dark colors), then heading_color and text_color MUST be light (like white #ffffff or light gray).
 3. Buttons: btn_primary_text must have high contrast against btn_primary_bg. btn_secondary_text must contrast against bg_color.
-4. Coherence: Colors generated per section must match the stylistic tokens provided in the prompt.
-5. Card Container Legibility: Inside the page sections, card-like containers will be rendered with translucent dark surfaces (for dark backgrounds) or solid light surfaces (for light backgrounds). Therefore:
+4. Card Container Legibility: Inside the page sections, card-like containers will be rendered with translucent dark surfaces (for dark backgrounds) or solid light surfaces (for light backgrounds). Therefore:
    - If bg_color is dark, text_color and heading_color must be light/white so they show up clearly.
    - If bg_color is light, text_color and heading_color must be dark/charcoal so they show up clearly.`;
 }
 
-export function buildSectionStylerUserPrompt(quiz: QuizPayload, wireframeJson: string, styleJson: string): string {
+export function buildSectionStylerUserPrompt(quiz: QuizPayload, wireframeJson: string): string {
   return `Write the dynamic copy and generate contrast-safe section color schemes for "${quiz.business_name}".
 
 ## Wireframe Structure
 ${wireframeJson}
-
-## Brand Style Settings
-${styleJson}
 
 ## Required JSON Output
 Return ONLY this JSON object structure (no markdown wrappers, no text outside JSON):
@@ -262,9 +258,9 @@ Return ONLY this JSON object structure (no markdown wrappers, no text outside JS
 // ═════════════════════════════════════════════════════════════════════════════
 
 export function buildSectionCoderSystemPrompt(): string {
-  return `You are a Senior UI/UX Engineer and Expert Web Developer. Your task is to generate customized, responsive, inline-styled HTML blocks for website sections.
+  return `You are a Senior UI/UX Engineer and Expert Web Developer. Your task is to generate customized, responsive, inline-styled HTML blocks for a specific page of a website concept.
 
-You must return a single JSON object where keys represent the section identifiers (e.g. "{pageSlug}_{sectionIndex}") and values are the generated HTML/CSS markup string. Do not include markdown code blocks or explanations outside of the JSON.
+You must return a single JSON object where keys represent the section indices (e.g. "0", "1", "2") and values are the generated HTML/CSS markup string. Do not include markdown code blocks or explanations outside of the JSON.
 
 CRITICAL MARKUP DESIGN RULES:
 1. Dynamic Styling: The design system is set by the colors and fonts parameters. You MUST write custom inline styles (e.g., using flexbox, CSS grid, custom padding/margins, borders, gradients, and font-family declarations) to design the markup.
@@ -274,11 +270,14 @@ CRITICAL MARKUP DESIGN RULES:
 5. No External Assets: Use Unicode emojis or SVG shapes for icons. Do not load external JavaScript scripts.`;
 }
 
-export function buildSectionCoderUserPrompt(quiz: QuizPayload, sitemapJson: string, styleJson: string, copyJson: string): string {
-  return `Generate custom inline-styled HTML markup for all page sections of the website concept for "${quiz.business_name}".
+export function buildSectionCoderUserPrompt(quiz: QuizPayload, pageSlug: string, sectionsListJson: string, styleJson: string, copyJson: string): string {
+  return `Generate custom inline-styled HTML markup for all sections of the page "${pageSlug}" for the brand "${quiz.business_name}".
 
-## Wireframe Sitemap Structure (with Section Color Tokens)
-${sitemapJson}
+## Targeted Page
+Page Slug: "${pageSlug}"
+
+## Page Section Structures (with Section Color Tokens)
+${sectionsListJson}
 
 ## Brand Style Settings
 ${styleJson}
@@ -290,11 +289,10 @@ ${copyJson}
 Return ONLY a valid JSON object matching this structure (no markdown wrappers):
 {
   "custom_code": {
-    "home_0": "<div style=\\"background: #121212; padding: 80px 40px; font-family: 'Inter', sans-serif;\\">...</div>",
-    "home_1": "<div style=\\"background: #ffffff; padding: 60px 40px;\\">...</div>"
+    "0": "<div style=\\"background: #121212; padding: 80px 40px; font-family: 'Inter', sans-serif;\\">...</div>",
+    "1": "<div style=\\"background: #ffffff; padding: 60px 40px;\\">...</div>"
   }
 }
 
-Important: Generate a unique styled HTML block for every section of every page in the sitemap JSON. Each key MUST be formed as "{pageSlug}_{sectionIndex}" (e.g. "home_0", "home_1", "about_0", etc.).`;
+Important: Generate a unique styled HTML block for every section index in the page sections list. Each key MUST be the index string (e.g. "0", "1", "2").`;
 }
-

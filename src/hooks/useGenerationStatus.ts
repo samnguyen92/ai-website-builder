@@ -19,34 +19,31 @@ export function useGenerationStatus(leadId: string | null) {
   });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const fetchOnce = async () => {
+    if (!leadId) return;
+    try {
+      const res = await fetch(`/api/status/${leadId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setState({
+        status: data.status,
+        payload: data.payload,
+        errorMessage: data.errorMessage || null,
+        regenerateCount: data.regenerateCount ?? 0,
+      });
+      return data;
+    } catch {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     if (!leadId) return;
 
     const poll = async () => {
-      try {
-        const res = await fetch(`/api/status/${leadId}`);
-        if (!res.ok) return;
-        const data = await res.json();
-
-        if (data.status === "complete") {
-          setState({
-            status: "complete",
-            payload: data.payload,
-            errorMessage: null,
-            regenerateCount: data.regenerateCount ?? 0,
-          });
-          clearInterval(intervalRef.current!);
-        } else if (data.status === "error") {
-          setState({
-            status: "error",
-            payload: null,
-            errorMessage: data.errorMessage,
-            regenerateCount: data.regenerateCount ?? 0,
-          });
-          clearInterval(intervalRef.current!);
-        }
-      } catch {
-        // network hiccup — keep polling
+      const data = await fetchOnce();
+      if (data && (data.status === "complete" || data.status === "error")) {
+        clearInterval(intervalRef.current!);
       }
     };
 
@@ -58,5 +55,5 @@ export function useGenerationStatus(leadId: string | null) {
     };
   }, [leadId]);
 
-  return state;
+  return { ...state, refetch: fetchOnce };
 }
