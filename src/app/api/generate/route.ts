@@ -22,6 +22,55 @@ const openrouter = new OpenAI({
   },
 });
 
+/** Helper to run text LLM completions with fallback options if a model is offline/unavailable */
+async function generateLLMText({
+  messages,
+  temperature,
+  responseFormat,
+}: {
+  messages: any[];
+  temperature: number;
+  responseFormat?: any;
+}): Promise<string> {
+  const modelFallbackQueue = [
+    process.env.OPENROUTER_TEXT_MODEL ?? "deepseek/deepseek-chat-v3-0324",
+    "deepseek/deepseek-chat-v3-0324",
+    "google/gemini-2.5-flash",
+  ];
+
+  // Clean the :free suffix if present, adding clean paid version to front of the queue
+  const envModel = process.env.OPENROUTER_TEXT_MODEL;
+  if (envModel && envModel.endsWith(":free")) {
+    const paidModel = envModel.replace(":free", "");
+    if (!modelFallbackQueue.includes(paidModel)) {
+      modelFallbackQueue.unshift(paidModel);
+    }
+  }
+
+  let lastError: any = null;
+  for (const model of modelFallbackQueue) {
+    try {
+      console.log(`[generateLLMText] Invoking text agent model: ${model}`);
+      const completion = await openrouter.chat.completions.create({
+        model: model.replace(/[^\x00-\x7F]/g, "-"),
+        response_format: responseFormat,
+        temperature,
+        messages,
+      });
+      const content = completion.choices[0]?.message?.content;
+      if (content) {
+        return content;
+      }
+    } catch (err: any) {
+      console.warn(`[generateLLMText] Model ${model} failed:`, err?.message || err);
+      lastError = err;
+    }
+  }
+
+  throw new Error(`All text generation agent models failed. Last error: ${lastError?.message || lastError}`);
+}
+
+
 /** Shared helper to generate an image using a fallback list of OpenRouter image models */
 async function callOpenRouterImageAPI(prompt: string, models: string[]): Promise<string | null> {
   for (const model of models) {
@@ -184,41 +233,32 @@ export async function POST(req: NextRequest) {
         );
 
         try {
-          const rawModel =
-            process.env.OPENROUTER_TEXT_MODEL ?? "deepseek/deepseek-chat-v3-0324:free";
-
           // ==========================================
           // AGENT 1: Wireframing (Sitemap & Layouts flow)
           // ==========================================
           console.log(`[generate] starting Agent 1: Wireframe layout planner`);
-          const wireframeCompletion = await openrouter.chat.completions.create({
-            model: rawModel.replace(/[^\x00-\x7F]/g, "-"),
-            response_format: { type: "json_object" },
+          const wireframeRaw = await generateLLMText({
             temperature: 0.2, // low temperature for strict constraint adherence
+            responseFormat: { type: "json_object" },
             messages: [
               { role: "system", content: buildWireframeSystemPrompt() },
               { role: "user",   content: buildWireframeUserPrompt(quiz) },
             ],
           });
-
-          const wireframeRaw = wireframeCompletion.choices[0]?.message?.content ?? '{"sitemap":[]}';
           console.log(`[generate] Agent 1 wireframe layout generated:`, wireframeRaw);
 
           // ==========================================
           // AGENT 2: Styling & Brand Identity Design
           // ==========================================
           console.log(`[generate] starting Agent 2: Branding strategist`);
-          const expansionCompletion = await openrouter.chat.completions.create({
-            model: rawModel.replace(/[^\x00-\x7F]/g, "-"),
-            response_format: { type: "json_object" },
+          const styleRaw = await generateLLMText({
             temperature: 0.7,
+            responseFormat: { type: "json_object" },
             messages: [
               { role: "system", content: buildExpansionSystemPrompt() },
               { role: "user",   content: buildExpansionUserPrompt(quiz, wireframeRaw) },
             ],
           });
-
-          const styleRaw = expansionCompletion.choices[0]?.message?.content ?? "{}";
           const styleParsed = JSON.parse(styleRaw);
           console.log(`[generate] Agent 2 branding system generated`);
 
@@ -226,17 +266,14 @@ export async function POST(req: NextRequest) {
           // AGENT 3: Section Styler & Copywriter (Dynamic Copy + Section Colors)
           // ==========================================
           console.log(`[generate] starting Agent 3: Section designer & copywriter`);
-          const sectionStylerCompletion = await openrouter.chat.completions.create({
-            model: rawModel.replace(/[^\x00-\x7F]/g, "-"),
-            response_format: { type: "json_object" },
+          const stylerRaw = await generateLLMText({
             temperature: 0.6,
+            responseFormat: { type: "json_object" },
             messages: [
               { role: "system", content: buildSectionStylerSystemPrompt() },
               { role: "user",   content: buildSectionStylerUserPrompt(quiz, wireframeRaw, styleRaw) },
             ],
           });
-
-          const stylerRaw = sectionStylerCompletion.choices[0]?.message?.content ?? "{}";
           const stylerParsed = JSON.parse(stylerRaw);
           console.log(`[generate] Agent 3 copywriter & section styler complete`);
 
