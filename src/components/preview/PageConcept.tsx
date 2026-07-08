@@ -1798,6 +1798,19 @@ export function PageConcept({ payload }: Props) {
           {/* Render layout sections dynamically based on AI-generated sitemap structure */}
           <div style={{ display: "flex", flexDirection: "column" }}>
             {pageSections.map((sec, idx) => {
+              const sectionKey = `${activeTab}_${idx}`;
+              const customHtml = payload.custom_code?.[sectionKey];
+
+              if (customHtml) {
+                return (
+                  <div
+                    key={idx}
+                    style={{ borderBottom: `1px solid ${colors.text_muted}10` }}
+                    dangerouslySetInnerHTML={{ __html: customHtml }}
+                  />
+                );
+              }
+
               const conceptIndex = (idx + activeTab.length) % 3;
               const sectionStyle: SectionStyle = typeof sec === "string" || !sec?.name
                 ? {

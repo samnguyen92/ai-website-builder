@@ -256,3 +256,45 @@ Return ONLY this JSON object structure (no markdown wrappers, no text outside JS
   }
 }`;
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// AGENT 4: Section Coder Agent
+// ═════════════════════════════════════════════════════════════════════════════
+
+export function buildSectionCoderSystemPrompt(): string {
+  return `You are a Senior UI/UX Engineer and Expert Web Developer. Your task is to generate customized, responsive, inline-styled HTML blocks for website sections.
+
+You must return a single JSON object where keys represent the section identifiers (e.g. "{pageSlug}_{sectionIndex}") and values are the generated HTML/CSS markup string. Do not include markdown code blocks or explanations outside of the JSON.
+
+CRITICAL MARKUP DESIGN RULES:
+1. Dynamic Styling: The design system is set by the colors and fonts parameters. You MUST write custom inline styles (e.g., using flexbox, CSS grid, custom padding/margins, borders, gradients, and font-family declarations) to design the markup.
+2. Section Vibe: Design beautiful, custom, non-generic layouts. Make cards with borders, hover transitions (via simple inline styles or micro-animations), badges, lists, and grids.
+3. Content Integration: Inject the custom tagline, brand icons, and copywriting text from the copy dictionary into the corresponding section markup.
+4. Contrast Rule: Ensure high color contrast. If the section background is dark, the text must be white/light. If the section background is light, the text must be dark charcoal.
+5. No External Assets: Use Unicode emojis or SVG shapes for icons. Do not load external JavaScript scripts.`;
+}
+
+export function buildSectionCoderUserPrompt(quiz: QuizPayload, sitemapJson: string, styleJson: string, copyJson: string): string {
+  return `Generate custom inline-styled HTML markup for all page sections of the website concept for "${quiz.business_name}".
+
+## Wireframe Sitemap Structure (with Section Color Tokens)
+${sitemapJson}
+
+## Brand Style Settings
+${styleJson}
+
+## Marketing Niche Copywriting (Demo Content)
+${copyJson}
+
+## Output JSON Schema
+Return ONLY a valid JSON object matching this structure (no markdown wrappers):
+{
+  "custom_code": {
+    "home_0": "<div style=\\"background: #121212; padding: 80px 40px; font-family: 'Inter', sans-serif;\\">...</div>",
+    "home_1": "<div style=\\"background: #ffffff; padding: 60px 40px;\\">...</div>"
+  }
+}
+
+Important: Generate a unique styled HTML block for every section of every page in the sitemap JSON. Each key MUST be formed as "{pageSlug}_{sectionIndex}" (e.g. "home_0", "home_1", "about_0", etc.).`;
+}
+

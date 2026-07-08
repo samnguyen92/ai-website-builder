@@ -8,6 +8,8 @@ import {
   buildExpansionUserPrompt,
   buildSectionStylerSystemPrompt,
   buildSectionStylerUserPrompt,
+  buildSectionCoderSystemPrompt,
+  buildSectionCoderUserPrompt,
 } from "@/lib/ai/prompt";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -322,16 +324,33 @@ export async function POST(req: NextRequest) {
           const stylerParsed = JSON.parse(stylerRaw);
           console.log(`[generate] Agent 3 copywriter & section styler complete`);
 
+          // ==========================================
+          // AGENT 4: Section Coder Agent (Dynamic Inline Styled HTML/CSS Layouts)
+          // ==========================================
+          console.log(`[generate] starting Agent 4: Section Coder Agent`);
+          const coderRaw = await generateLLMText({
+            temperature: 0.5,
+            responseFormat: { type: "json_object" },
+            messages: [
+              { role: "system", content: buildSectionCoderSystemPrompt() },
+              { role: "user",   content: buildSectionCoderUserPrompt(quiz, stylerRaw, styleRaw, JSON.stringify(stylerParsed.demo_content || {})) },
+            ],
+          });
+          const coderParsed = JSON.parse(coderRaw);
+          console.log(`[generate] Agent 4 coding complete`);
+
           // Merge all results into final parsed payload
           const finalParsed = {
             business_name: styleParsed.business_name || quiz.business_name,
             colors: styleParsed.colors,
             typography: styleParsed.typography,
+            icon_style: styleParsed.icon_style || "duotone-colored",
             icon_set: styleParsed.icon_set,
             tagline: styleParsed.tagline || "",
             vibe_summary: styleParsed.vibe_summary || "",
             sitemap: stylerParsed.sitemap || [],
             demo_content: stylerParsed.demo_content || {},
+            custom_code: coderParsed.custom_code || {},
           };
 
           // Validate against expanded Zod schema

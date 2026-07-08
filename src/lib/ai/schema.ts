@@ -188,6 +188,7 @@ export const AIOutputSchema = z.object({
     sections: z.array(SectionStyleSchema),
   })).min(1),
   demo_content:      DemoContentSchema,
+  custom_code:       z.record(z.string(), z.string()).optional().default({}),
   logo_url:          z.string().optional().nullable(),
   moodboard_images:  z.array(z.string()).optional().default([]),
   hero_image_url:    z.string().optional().nullable(),
