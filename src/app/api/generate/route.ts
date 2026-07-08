@@ -367,13 +367,40 @@ export async function POST(req: NextRequest) {
           // ==========================================
           // STEP 3: Concurrently generate Logo, Hero banner, and Moodboard images
           // ==========================================
-          console.log(`[generate] starting logo, hero & moodboard image generations for "${aiData.business_name}"`);
-          const [logoRes, heroRes, mood1Res, mood2Res, mood3Res] = await Promise.allSettled([
+          console.log(`[generate] starting logo and hero image generations for "${aiData.business_name}"`);
+          
+          // Generate moodboard images instantly using Unsplash curated niches based on style tags
+          const tags = (quiz.style_tags || []).map(t => t.toLowerCase());
+          let moodImages = [
+            "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80",
+            "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80",
+            "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80"
+          ];
+          if (tags.includes("premium") || tags.includes("elegant") || tags.includes("trustworthy") || tags.includes("secure")) {
+            moodImages = [
+              "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80"
+            ];
+          } else if (tags.includes("creative") || tags.includes("bold") || tags.includes("playful")) {
+            moodImages = [
+              "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=80"
+            ];
+          } else if (tags.includes("warm") || tags.includes("handcrafted")) {
+            moodImages = [
+              "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=600&q=80"
+            ];
+          }
+          aiData.moodboard_images = moodImages;
+
+          // Call ONLY the logo and hero image concurrent calls
+          const [logoRes, heroRes] = await Promise.allSettled([
             generateLogo(aiData.business_name),
             generateImage(`A clean high-quality modern website hero section graphic for a brand named "${aiData.business_name}". Minimal flat design UI, premium business branding mockup background, no text.`),
-            generateImage(`Abstract flat vector layout mockup asset representing brand style for "${aiData.business_name}". Minimal geometry, solid colors, color scheme: ${aiData.colors.primary} and ${aiData.colors.secondary}`),
-            generateImage(`Modern minimal flat illustration graphic design asset representing services offered by "${aiData.business_name}". Solid background, no text.`),
-            generateImage(`Clean brand identity token graphic layout representing "${aiData.business_name}". Premium UI interface moodboard element, solid white background, flat aesthetic, no text.`)
           ]);
 
           // Set logo
@@ -384,12 +411,6 @@ export async function POST(req: NextRequest) {
           if (heroRes.status === "fulfilled" && heroRes.value) {
             aiData.hero_image_url = heroRes.value;
           }
-          // Assemble moodboard images
-          const moodImages: string[] = [];
-          if (mood1Res.status === "fulfilled" && mood1Res.value) moodImages.push(mood1Res.value);
-          if (mood2Res.status === "fulfilled" && mood2Res.value) moodImages.push(mood2Res.value);
-          if (mood3Res.status === "fulfilled" && mood3Res.value) moodImages.push(mood3Res.value);
-          aiData.moodboard_images = moodImages;
 
           // D. Save completed payload to Supabase
           await supabase
