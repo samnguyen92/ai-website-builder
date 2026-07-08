@@ -33,8 +33,8 @@ async function generateLLMText({
   responseFormat?: any;
 }): Promise<string> {
   const modelFallbackQueue = [
-    process.env.OPENROUTER_TEXT_MODEL ?? "deepseek/deepseek-chat-v3-0324",
-    "deepseek/deepseek-chat-v3-0324",
+    process.env.OPENROUTER_TEXT_MODEL ?? "deepseek/deepseek-v4-flash",
+    "deepseek/deepseek-v4-flash",
     "google/gemini-2.5-flash",
   ];
 
@@ -115,12 +115,12 @@ async function callOpenRouterImageAPI(prompt: string, models: string[]): Promise
 }
 
 async function generateLogo(businessName: string): Promise<string | null> {
-  const primaryModel = process.env.OPENROUTER_IMAGE_MODEL ?? "google/gemini-2.5-flash-image";
+  const primaryModel = process.env.OPENROUTER_IMAGE_MODEL ?? "google/gemini-3.1-flash-lite-image";
   const models = [
     primaryModel,
+    "google/gemini-3.1-flash-lite-image",
     "recraft/recraft-v3",
     "black-forest-labs/flux.2-flex",
-    "openai/gpt-image-1-mini",
   ];
   return callOpenRouterImageAPI(
     `A beautiful clean flat vector logo mark for a company named "${businessName}". Premium UI branding icon, minimal geometry, high quality, solid white background, no text.`,
@@ -129,12 +129,12 @@ async function generateLogo(businessName: string): Promise<string | null> {
 }
 
 async function generateImage(prompt: string): Promise<string | null> {
-  const primaryModel = process.env.OPENROUTER_IMAGE_MODEL ?? "google/gemini-2.5-flash-image";
+  const primaryModel = process.env.OPENROUTER_IMAGE_MODEL ?? "google/gemini-3.1-flash-lite-image";
   const models = [
     primaryModel,
+    "google/gemini-3.1-flash-lite-image",
     "recraft/recraft-v3",
     "black-forest-labs/flux.2-flex",
-    "openai/gpt-image-1-mini",
   ];
   return callOpenRouterImageAPI(prompt, models);
 }
