@@ -147,7 +147,36 @@ export async function POST(req: NextRequest) {
     let leadId: string;
     let quiz: QuizPayload;
 
-    // ─── Case A: Revision Request (leadId + comment provided) ─────────────────
+    // ─── Case A: Register Only Request (Quiz submitted, returns leadId immediately) ──
+    if (body.registerOnly) {
+      const parseResult = QuizPayloadSchema.safeParse(body.quiz);
+      if (!parseResult.success) {
+        return NextResponse.json(
+          { error: "Invalid quiz payload", details: parseResult.error.flatten() },
+          { status: 400 }
+        );
+      }
+      quiz = parseResult.data;
+
+      const { data: newLead, error: insertError } = await supabase
+        .from("leads")
+        .insert({
+          email: quiz.email,
+          quiz_payload: quiz,
+          status: "pending",
+        })
+        .select("id")
+        .single();
+
+      if (insertError || !newLead) {
+        console.error("Supabase insert error:", insertError);
+        return NextResponse.json({ error: "Failed to create lead" }, { status: 500 });
+      }
+
+      return NextResponse.json({ leadId: newLead.id, status: "pending" });
+    }
+
+    // ─── Case B: Revision Request (leadId + comment provided) ─────────────────
     if (body.leadId && body.comment !== undefined) {
       leadId = body.leadId;
       const { data: existing, error: fetchError } = await supabase
@@ -194,7 +223,23 @@ export async function POST(req: NextRequest) {
 
       console.log(`[generate] revision request for lead ${leadId} (attempt ${quiz.regenerate_count}/2)`);
     }
-    // ─── Case B: Fresh Generation Request ────────────────────────────────────
+    // ─── Case C: Run registered generation for leadId ───────────────────────
+    else if (body.leadId) {
+      leadId = body.leadId;
+      const { data: existing, error: fetchError } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("id", leadId)
+        .single();
+
+      if (fetchError || !existing) {
+        return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+      }
+
+      quiz = existing.quiz_payload as QuizPayload;
+      console.log(`[generate] run registered generation for lead ${leadId}`);
+    }
+    // ─── Case D: Legacy Direct Fresh Generation Request ───────────────────────
     else {
       const parseResult = QuizPayloadSchema.safeParse(body);
       if (!parseResult.success) {

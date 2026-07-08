@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import { useGenerationStatus } from "@/hooks/useGenerationStatus";
 import { StyleGuidePanel } from "@/components/preview/StyleGuidePanel";
 import { SitemapTree } from "@/components/preview/SitemapTree";
@@ -205,6 +205,45 @@ function ErrorState({ message }: { message: string | null }) {
 export default function PreviewPage({ params }: { params: Promise<{ leadId: string }> }) {
   const { leadId } = use(params);
   const { status, payload, errorMessage, regenerateCount } = useGenerationStatus(leadId);
+
+  // Trigger the actual generation process on loading page mount if state is pending
+  useEffect(() => {
+    if (status === "pending") {
+      let isAborted = false;
+      const startGeneration = async () => {
+        try {
+          console.log("[PreviewPage] Initiating dynamic background generation stream for lead:", leadId);
+          const res = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ leadId }),
+          });
+          if (!res.ok) {
+            console.error("[PreviewPage] API generation endpoint returned non-ok status:", res.status);
+          } else {
+            const reader = res.body?.getReader();
+            if (reader) {
+              const decoder = new TextDecoder();
+              while (!isAborted) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                // Read from stream to keep connection alive
+                decoder.decode(value);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("[PreviewPage] Generation failed on request mount:", err);
+        }
+      };
+
+      startGeneration();
+
+      return () => {
+        isAborted = true;
+      };
+    }
+  }, [leadId, status]);
 
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);

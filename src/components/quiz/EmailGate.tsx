@@ -25,34 +25,20 @@ export function EmailGate({ quizState }: Props) {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          registerOnly: true,
+          quiz: payload,
+        }),
       });
 
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.error ?? "Generation failed");
+        throw new Error(d.error ?? "Generation registration failed");
       }
 
-      // Read the first newline-delimited JSON line from the stream.
-      // We do NOT cancel the reader — the server stream stays alive to keep
-      // the Node.js process running for the LLM call.
-      const reader  = res.body!.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const newlineIdx = buffer.indexOf("\n");
-        if (newlineIdx !== -1) {
-          const firstLine = buffer.slice(0, newlineIdx).trim();
-          const { leadId } = JSON.parse(firstLine);
-          // Navigate without closing the reader — stream closes on its own
-          router.push(`/preview/${leadId}`);
-          return; // exit handleSubmit; stream will be GC'd after navigation
-        }
-      }
+      const data = await res.json();
+      router.push(`/preview/${data.leadId}`);
+      return;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
