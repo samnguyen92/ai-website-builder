@@ -373,7 +373,7 @@ export function SkeletonLayout({ sitemap, colors }: Props) {
           {/* Sections */}
           <div style={{ backgroundColor: colors.background }}>
             {page.sections.map((section, idx) => {
-              const SectionComponent = resolveSectionComponent(section);
+              const SectionComponent = resolveSectionComponent(section.name);
               return (
                 <div key={idx} className="relative group">
                   {/* Section label */}
@@ -381,7 +381,7 @@ export function SkeletonLayout({ sitemap, colors }: Props) {
                     className="absolute top-3 left-6 z-10 text-xs font-mono px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                     style={{ backgroundColor: colors.accent, color: "#fff" }}
                   >
-                    {section}
+                    {section.name}
                   </div>
                   <div className="border-b" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
                     <SectionComponent />

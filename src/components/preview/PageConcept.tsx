@@ -3,6 +3,10 @@
 import { useState } from "react";
 import type { AIOutput } from "@/lib/ai/schema";
 
+interface Props {
+  payload: AIOutput;
+}
+
 function isLightColor(hex: string): boolean {
   if (!hex) return true;
   const cleanHex = hex.replace("#", "");
@@ -25,28 +29,98 @@ function getContrastColor(hex: string): string {
   return isLightColor(hex) ? "#121212" : "#ffffff";
 }
 
-interface Props {
-  payload: AIOutput;
+interface SectionStyle {
+  name: string;
+  bg_color: string;
+  text_color: string;
+  heading_color: string;
+  accent_color: string;
+  btn_primary_bg: string;
+  btn_primary_text: string;
+  btn_secondary_border: string;
+  btn_secondary_text: string;
 }
 
 export function PageConcept({ payload }: Props) {
-  const { colors, typography, sitemap, tagline, business_name, logo_url, hero_image_url, moodboard_images } = payload;
+  const { colors, typography, sitemap, tagline, business_name, logo_url, hero_image_url, moodboard_images, demo_content } = payload;
   const [activeTab, setActiveTab] = useState(sitemap[0]?.slug || "home");
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
 
   const currentTab = sitemap.find((p) => p.slug === activeTab) || sitemap[0];
-  const pageSections = currentTab?.sections || ["Hero", "Features Grid", "CTA Banner"];
+  const pageSections = (currentTab?.sections || []) as unknown as SectionStyle[];
+
+  // Safe fallback copywriting dictionary in case payload.demo_content is undefined/partial
+  const copy = {
+    hero: {
+      title: demo_content?.hero?.title || tagline || `Welcome to ${business_name}`,
+      subtitle: demo_content?.hero?.subtitle || "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.",
+      cta_primary: demo_content?.hero?.cta_primary || "Get Started Now",
+      cta_secondary: demo_content?.hero?.cta_secondary || "Learn More",
+    },
+    features: demo_content?.features || [
+      { title: "Capability One", desc: "Lorem ipsum dolor sit amet, consectetur.", num: "01" },
+      { title: "Capability Two", desc: "Lorem ipsum dolor sit amet, consectetur.", num: "02" },
+      { title: "Capability Three", desc: "Lorem ipsum dolor sit amet, consectetur.", num: "03" }
+    ],
+    stats: demo_content?.stats || [
+      { value: "100%", label: "Satisfaction Rate" },
+      { value: "24/7", label: "Availability" },
+      { value: "5★", label: "Average Rating" }
+    ],
+    cta: {
+      title: demo_content?.cta?.title || "Ready to scale your business?",
+      subtitle: demo_content?.cta?.subtitle || "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      button_text: demo_content?.cta?.button_text || "Book Appointment",
+    },
+    pricing: demo_content?.pricing || [
+      { name: "Starter", price: "$49", desc: "Basic plan", items: ["10 items", "AI Palette suggestion"] },
+      { name: "Pro Plan", price: "$149", desc: "Best value", items: ["Unlimited entries", "Sitemap trees"] }
+    ],
+    faq: demo_content?.faq || [
+      { q: "How does it work?", a: "Our pipeline creates sitemaps and style guides." },
+      { q: "Can I upgrade?", a: "Select any pricing cards above." }
+    ],
+    team: demo_content?.team || [
+      { name: "John Doe", role: "Design Lead", bio: "Figma specialist", emoji: "👤" },
+      { name: "Jane Smith", role: "AI Engineer", bio: "Agent orchestrator", emoji: "👩‍💻" }
+    ],
+    services: demo_content?.services || [
+      { title: "Brand Identity Design", desc: "Logo and color systems", tag: "Popular", emoji: "🎨" },
+      { title: "Website Development", desc: "Next.js builds", tag: "Featured", emoji: "⚡" }
+    ],
+    products: demo_content?.products || [
+      { name: "Premium Branding Kit", price: "$99.00", cat: "Branding", rating: "5★", emoji: "🎨" },
+      { name: "UX Wireframing Guide", price: "$29.00", cat: "Design", rating: "4★", emoji: "📐" }
+    ],
+    testimonials: demo_content?.testimonials || [
+      { quote: "Align generated a beautiful sitemap and palette in seconds.", author: "Sarah Connor, Nova" },
+      { quote: "Revisions are smooth and the text fits perfectly.", author: "Marcus Aurelius, Founder" }
+    ],
+    blog: demo_content?.blog || [
+      { title: "Building pages converting in 2026", date: "July 8, 2026", read: "5 min", emoji: "⚡" },
+      { title: "Typography pairings that convert", date: "June 30, 2026", read: "8 min", emoji: "✍️" }
+    ]
+  };
 
   // ─── Section Renderers supporting 3 design concepts (Concept 0, 1, 2) ─────
 
-  function RenderHero({ conceptIndex }: { conceptIndex: number }) {
+  function RenderHero({ conceptIndex, style }: { conceptIndex: number; style: SectionStyle }) {
+    const bg = style.bg_color || colors.background;
+    const text = style.text_color || colors.text;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.accent;
+    const btnBg = style.btn_primary_bg || colors.primary;
+    const btnText = style.btn_primary_text || "#ffffff";
+    const btnBorder = style.btn_secondary_border || colors.text_muted;
+    const btnSecText = style.btn_secondary_text || colors.text;
+
     // Concept 2: Minimal card outline layout
     if (conceptIndex === 2) {
       return (
-        <div style={{ padding: "60px 40px", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, textAlign: "center" }}>
+        <div style={{ padding: "60px 40px", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, textAlign: "center", background: bg }}>
           <div style={{
             background: colors.surface,
-            border: `1.5px solid ${colors.primary}`,
+            border: `1.5px solid ${accent}`,
             borderRadius: 16,
             padding: "40px 30px",
             maxWidth: 720,
@@ -56,25 +130,25 @@ export function PageConcept({ payload }: Props) {
             gap: 16,
             boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
           }}>
-            <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: colors.primary }}>
+            <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: accent }}>
               ✦ {currentTab?.label || "Overview"} Page Concept ✦
             </span>
             <h2 style={{
               fontFamily: `'${typography.heading.family}', sans-serif`,
               fontWeight: 800,
               fontSize: 36,
-              color: colors.text,
+              color: heading,
               margin: 0,
             }}>
-              {activeTab === "home" ? tagline : `Welcome to Our ${currentTab?.label}`}
+              {copy.hero.title}
             </h2>
-            <p style={{ fontSize: 13, color: colors.text_muted, lineHeight: 1.6, maxWidth: 520, margin: 0 }}>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            <p style={{ fontSize: 13, color: text, opacity: 0.85, lineHeight: 1.6, maxWidth: 520, margin: 0 }}>
+              {copy.hero.subtitle}
             </p>
             <div style={{ display: "flex", gap: 10, width: "100%", justifyContent: "center", marginTop: 8 }}>
               <input type="email" placeholder="Enter your business email" style={{ padding: "10px 14px", borderRadius: 6, border: `1.5px solid ${colors.text_muted}22`, background: colors.background, color: colors.text, fontSize: 12, minWidth: 220 }} />
-              <button style={{ background: colors.primary, color: "#fff", border: "none", borderRadius: 6, padding: "10px 20px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-                Notify Me
+              <button style={{ background: btnBg, color: btnText, border: "none", borderRadius: 6, padding: "10px 20px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                {copy.hero.cta_primary}
               </button>
             </div>
           </div>
@@ -95,20 +169,20 @@ export function PageConcept({ payload }: Props) {
           gap: 24,
           overflow: "hidden",
           background: hero_image_url
-            ? `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.75)), url(${hero_image_url})`
-            : `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || colors.primary})`,
+            ? `linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.80)), url(${hero_image_url})`
+            : `linear-gradient(135deg, ${bg}, ${colors.surface})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}>
           <div style={{
             display: "inline-flex",
-            background: `${colors.primary}22`,
-            border: `1px solid ${colors.primary}44`,
+            background: `${accent}22`,
+            border: `1px solid ${accent}44`,
             borderRadius: 9999,
             padding: "6px 16px",
             fontSize: 11,
             fontWeight: 700,
-            color: "#fff",
+            color: hero_image_url ? "#fff" : text,
             textTransform: "uppercase",
             letterSpacing: "0.05em",
           }}>
@@ -119,20 +193,20 @@ export function PageConcept({ payload }: Props) {
             fontWeight: 800,
             fontSize: 48,
             lineHeight: 1.1,
-            color: "#ffffff",
+            color: hero_image_url ? "#ffffff" : heading,
             maxWidth: 700,
           }}>
-            {activeTab === "home" ? tagline : `Welcome to Our ${currentTab?.label}`}
+            {copy.hero.title}
           </h2>
-          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", lineHeight: 1.6, maxWidth: 500 }}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+          <p style={{ fontSize: 14, color: hero_image_url ? "rgba(255,255,255,0.85)" : text, lineHeight: 1.6, maxWidth: 500 }}>
+            {copy.hero.subtitle}
           </p>
           <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
-            <button style={{ background: colors.accent, color: getContrastColor(colors.accent), border: "none", borderRadius: 8, padding: "14px 28px", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(0,0,0,0.3)" }}>
-              Get Started Now
+            <button style={{ background: btnBg, color: btnText, border: "none", borderRadius: 8, padding: "14px 28px", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(0,0,0,0.3)" }}>
+              {copy.hero.cta_primary}
             </button>
-            <button style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 8, padding: "14px 28px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-              Explore Services
+            <button style={{ background: "rgba(255,255,255,0.15)", color: hero_image_url ? "#fff" : btnSecText, border: `1px solid ${hero_image_url ? "rgba(255,255,255,0.25)" : btnBorder}`, borderRadius: 8, padding: "14px 28px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+              {copy.hero.cta_secondary}
             </button>
           </div>
         </div>
@@ -147,18 +221,19 @@ export function PageConcept({ payload }: Props) {
         gridTemplateColumns: hero_image_url ? "1.2fr 1fr" : "1fr",
         gap: 40,
         alignItems: "center",
+        background: bg,
       }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div style={{
             display: "inline-flex",
-            background: `${colors.primary}12`,
-            border: `1px solid ${colors.primary}25`,
+            background: `${accent}12`,
+            border: `1px solid ${accent}25`,
             borderRadius: 9999,
             padding: "5px 12px",
             width: "fit-content",
             fontSize: 11,
             fontWeight: 600,
-            color: colors.primary,
+            color: accent,
           }}>
             ✦ {currentTab?.label || "Overview"} Page
           </div>
@@ -167,19 +242,19 @@ export function PageConcept({ payload }: Props) {
             fontWeight: 700,
             fontSize: 42,
             lineHeight: 1.15,
-            color: colors.text,
+            color: heading,
           }}>
-            {activeTab === "home" ? tagline : `Welcome to Our ${currentTab?.label}`}
+            {copy.hero.title}
           </h2>
-          <p style={{ fontSize: 13, color: colors.text_muted, lineHeight: 1.6, maxWidth: 440 }}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
+          <p style={{ fontSize: 13, color: text, lineHeight: 1.6, maxWidth: 440 }}>
+            {copy.hero.subtitle}
           </p>
           <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-            <button style={{ background: colors.accent, color: getContrastColor(colors.accent), border: "none", borderRadius: 8, padding: "12px 24px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-              Get Started Now
+            <button style={{ background: btnBg, color: btnText, border: "none", borderRadius: 8, padding: "12px 24px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              {copy.hero.cta_primary}
             </button>
-            <button style={{ background: "transparent", color: colors.text, border: `1.5px solid ${colors.text_muted}`, borderRadius: 8, padding: "10px 22px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-              Learn More
+            <button style={{ background: "transparent", color: btnSecText, border: `1.5px solid ${btnBorder}`, borderRadius: 8, padding: "10px 22px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              {copy.hero.cta_secondary}
             </button>
           </div>
         </div>
@@ -193,32 +268,33 @@ export function PageConcept({ payload }: Props) {
     );
   }
 
-  function RenderFeaturesGrid({ conceptIndex }: { conceptIndex: number }) {
+  function RenderFeaturesGrid({ conceptIndex, style }: { conceptIndex: number; style: SectionStyle }) {
+    const bg = style.bg_color || colors.surface;
+    const text = style.text_color || colors.text_muted;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.accent;
+
     // Concept 2: Offset staggered grid with numbers
     if (conceptIndex === 2) {
       return (
-        <div style={{ padding: "60px 40px", display: "flex", flexDirection: "column", gap: 32 }}>
+        <div style={{ padding: "60px 40px", display: "flex", flexDirection: "column", gap: 32, background: bg }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
             <div>
-              <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: colors.primary }}>Core Capabilities</p>
-              <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: colors.text, marginTop: 6 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: accent }}>Capabilities</p>
+              <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: heading, marginTop: 6 }}>
                 Why clients trust us
               </h3>
             </div>
-            <span style={{ fontSize: 12, color: colors.text_muted, maxWidth: 280 }}>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
+            <span style={{ fontSize: 12, color: text, maxWidth: 280 }}>
+              Tailored solutions built specifically to handle brand workflows.
             </span>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, marginTop: 12 }}>
-            {[
-              { num: "01", title: "Strategy Audit", desc: "Detailed breakdown of competitor tactics." },
-              { num: "02", title: "Visual Direction", desc: "Premium tokens and color system mappings." },
-              { num: "03", title: "Full-Scale Launch", desc: "Structured build concepts ready to deploy." }
-            ].map((ft, idx) => (
+            {copy.features.map((ft, idx) => (
               <div key={idx} style={{
-                background: colors.surface,
-                borderLeft: `4px solid ${colors.primary}`,
+                background: colors.background,
+                borderLeft: `4px solid ${accent}`,
                 borderTop: `1px solid ${colors.text_muted}15`,
                 borderRight: `1px solid ${colors.text_muted}15`,
                 borderBottom: `1px solid ${colors.text_muted}15`,
@@ -228,9 +304,9 @@ export function PageConcept({ payload }: Props) {
                 flexDirection: "column",
                 gap: 12,
               }}>
-                <span style={{ fontSize: 24, fontWeight: 800, color: colors.primary }}>{ft.num}</span>
-                <h4 style={{ fontSize: 15, fontWeight: 700, color: colors.text, margin: 0 }}>{ft.title}</h4>
-                <p style={{ fontSize: 12, color: colors.text_muted, lineHeight: 1.6, margin: 0 }}>{ft.desc}</p>
+                <span style={{ fontSize: 24, fontWeight: 800, color: accent }}>{ft.num || `0${idx + 1}`}</span>
+                <h4 style={{ fontSize: 15, fontWeight: 700, color: heading, margin: 0 }}>{ft.title}</h4>
+                <p style={{ fontSize: 12, color: text, lineHeight: 1.6, margin: 0 }}>{ft.desc}</p>
               </div>
             ))}
           </div>
@@ -241,16 +317,13 @@ export function PageConcept({ payload }: Props) {
     // Concept 1: Alternating rows
     if (conceptIndex === 1) {
       return (
-        <div style={{ padding: "60px 40px", display: "flex", flexDirection: "column", gap: 50 }}>
+        <div style={{ padding: "60px 40px", display: "flex", flexDirection: "column", gap: 50, background: bg }}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: colors.primary }}>Our Process</p>
-            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: colors.text, marginTop: 8 }}>How we work</h3>
+            <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: accent }}>Our Process</p>
+            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: heading, marginTop: 8 }}>How we work</h3>
           </div>
-          {[
-            { step: "01", title: "Discovery Phase", emoji: "🔍", side: "left" },
-            { step: "02", title: "Design Concept", emoji: "📐", side: "right" },
-          ].map((item, idx) => {
-            const isLeft = item.side === "left";
+          {copy.features.slice(0, 2).map((item, idx) => {
+            const isLeft = idx % 2 === 0;
             return (
               <div key={idx} style={{
                 display: "grid",
@@ -260,23 +333,21 @@ export function PageConcept({ payload }: Props) {
                 direction: isLeft ? "ltr" : "rtl",
               }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left", direction: "ltr" }}>
-                  <span style={{ fontSize: 32, fontWeight: 800, color: `${colors.primary}33` }}>{item.step}</span>
-                  <h4 style={{ fontSize: 20, fontWeight: 700, color: colors.text }}>{item.title}</h4>
-                  <p style={{ fontSize: 13, color: colors.text_muted, lineHeight: 1.6 }}>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
-                  </p>
+                  <span style={{ fontSize: 32, fontWeight: 800, color: `${accent}33` }}>{item.num || `0${idx + 1}`}</span>
+                  <h4 style={{ fontSize: 20, fontWeight: 700, color: heading }}>{item.title}</h4>
+                  <p style={{ fontSize: 13, color: text, lineHeight: 1.6 }}>{item.desc}</p>
                 </div>
                 <div style={{
                   height: 180,
                   borderRadius: 12,
-                  background: `${colors.primary}10`,
+                  background: `${accent}10`,
                   border: `1px solid ${colors.text_muted}15`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 48,
                 }}>
-                  {item.emoji}
+                  {["🔍", "📐", "🚀"][idx]}
                 </div>
               </div>
             );
@@ -287,22 +358,18 @@ export function PageConcept({ payload }: Props) {
 
     // Concept 0: 3-column grid cards (Default)
     return (
-      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32 }}>
+      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32, background: bg }}>
         <div style={{ textAlign: "center", maxWidth: 500, margin: "0 auto" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: colors.primary }}>Capabilities</p>
-          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: colors.text, marginTop: 8 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: accent }}>Capabilities</p>
+          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: heading, marginTop: 8 }}>
             Core offerings
           </h3>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-          {[
-            { title: "Forensic Accounting", emoji: "📊" },
-            { title: "Business Advisory", emoji: "💼" },
-            { title: "Finance & Budgeting", emoji: "🛡️" },
-          ].map((item, idx) => (
+          {copy.features.map((item, idx) => (
             <div key={idx} style={{
-              background: colors.surface,
+              background: colors.background,
               borderRadius: 10,
               border: `1px solid ${colors.text_muted}15`,
               padding: 24,
@@ -310,13 +377,11 @@ export function PageConcept({ payload }: Props) {
               flexDirection: "column",
               gap: 12,
             }}>
-              <div style={{ width: 40, height: 40, borderRadius: 8, background: `${colors.primary}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
-                {item.emoji}
+              <div style={{ width: 40, height: 40, borderRadius: 8, background: `${accent}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                {["📊", "💼", "🛡️"][idx % 3]}
               </div>
-              <h4 style={{ fontSize: 16, fontWeight: 600, color: colors.text }}>{item.title}</h4>
-              <p style={{ fontSize: 12, color: colors.text_muted, lineHeight: 1.6 }}>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
-              </p>
+              <h4 style={{ fontSize: 16, fontWeight: 600, color: heading }}>{item.title}</h4>
+              <p style={{ fontSize: 12, color: text, lineHeight: 1.6 }}>{item.desc}</p>
             </div>
           ))}
         </div>
@@ -324,15 +389,20 @@ export function PageConcept({ payload }: Props) {
     );
   }
 
-  function RenderStats({ conceptIndex }: { conceptIndex: number }) {
+  function RenderStats({ conceptIndex, style }: { conceptIndex: number; style: SectionStyle }) {
+    const bg = style.bg_color || colors.surface;
+    const text = style.text_color || colors.text_muted;
+    const heading = style.heading_color || colors.primary;
+    const accent = style.accent_color || colors.primary;
+
     // Concept 2: Unified card with bold dividers
     if (conceptIndex === 2) {
       return (
-        <div style={{ padding: "40px" }}>
+        <div style={{ padding: "40px", background: bg }}>
           <div style={{
-            background: colors.surface,
+            background: colors.background,
             borderRadius: 14,
-            border: `2px solid ${colors.primary}`,
+            border: `2px solid ${accent}`,
             padding: "30px 40px",
             display: "grid",
             gridTemplateColumns: "1.2fr 1fr 1fr 1fr",
@@ -341,17 +411,17 @@ export function PageConcept({ payload }: Props) {
           }}>
             <div>
               <h4 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>Metrics That Matter</h4>
-              <p style={{ fontSize: 12, color: colors.text_muted, marginTop: 6, margin: 0 }}>Our accomplishments verified.</p>
+              <p style={{ fontSize: 12, color: text, marginTop: 6, margin: 0 }}>Our accomplishments verified.</p>
             </div>
-            {["120+", "15 Min", "100%"].map((val, idx) => (
+            {copy.stats.map((val, idx) => (
               <div key={idx} style={{
                 textAlign: "center",
-                borderLeft: `2.5px solid ${colors.primary}`,
+                borderLeft: `2.5px solid ${accent}`,
                 paddingLeft: 20,
               }}>
-                <span style={{ fontSize: 28, fontWeight: 800, color: colors.primary }}>{val}</span>
-                <p style={{ fontSize: 10, color: colors.text_muted, marginTop: 4, textTransform: "uppercase", margin: 0 }}>
-                  {["Members", "Response Time", "Accuracy"][idx]}
+                <span style={{ fontSize: 28, fontWeight: 800, color: heading }}>{val.value}</span>
+                <p style={{ fontSize: 10, color: text, marginTop: 4, textTransform: "uppercase", margin: 0 }}>
+                  {val.label}
                 </p>
               </div>
             ))}
@@ -369,34 +439,27 @@ export function PageConcept({ payload }: Props) {
           justifyContent: "space-around",
           alignItems: "center",
           gap: 20,
-          background: colors.surface,
-          margin: "24px 40px",
-          borderRadius: 12,
-          border: `1px solid ${colors.text_muted}15`,
+          background: bg,
         }}>
-          {[
-            { value: "99%", label: "Satisfaction" },
-            { value: "24h", label: "Response Time" },
-            { value: "10k+", label: "Happy Clients" },
-          ].map((item, i) => (
+          {copy.stats.map((item, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <div style={{
                 width: 64,
                 height: 64,
                 borderRadius: "50%",
-                border: `3px solid ${colors.primary}`,
+                border: `3px solid ${accent}`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontWeight: 700,
                 fontSize: 16,
-                color: colors.text,
+                color: heading,
               }}>
                 {item.value}
               </div>
               <div>
                 <p style={{ fontSize: 13, fontWeight: 600, color: colors.text, margin: 0 }}>{item.label}</p>
-                <p style={{ fontSize: 11, color: colors.text_muted, margin: 0 }}>Verified stats</p>
+                <p style={{ fontSize: 11, color: text, margin: 0 }}>Verified stats</p>
               </div>
             </div>
           ))}
@@ -407,43 +470,42 @@ export function PageConcept({ payload }: Props) {
     // Concept 0: standard vertical counters (Default)
     return (
       <div style={{
-        background: colors.surface,
-        margin: "24px 40px",
-        borderRadius: 12,
-        border: `1px solid ${colors.text_muted}15`,
+        background: bg,
         padding: "24px 0",
         display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
+        gridTemplateColumns: `repeat(${copy.stats.length}, 1fr)`,
         textAlign: "center",
       }}>
-        {[
-          { num: "4.8★", label: "Client Rating" },
-          { num: "50+", label: "Projects Delivered" },
-          { num: "24/7", label: "Support Avail" },
-          { num: "0% Fail", label: "Reliability Rate" },
-        ].map((st, i) => (
-          <div key={i} style={{ borderRight: i < 3 ? `1px solid ${colors.text_muted}22` : "none" }}>
+        {copy.stats.map((st, i) => (
+          <div key={i} style={{ borderRight: i < copy.stats.length - 1 ? `1px solid ${colors.text_muted}22` : "none" }}>
             <p style={{
               fontFamily: `'${typography.heading.family}', sans-serif`,
               fontWeight: 700,
               fontSize: 28,
-              color: colors.primary,
+              color: heading,
               margin: 0,
-            }}>{st.num}</p>
-            <p style={{ fontSize: 10, color: colors.text_muted, marginTop: 4, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>{st.label}</p>
+            }}>{st.value}</p>
+            <p style={{ fontSize: 10, color: text, marginTop: 4, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>{st.label}</p>
           </div>
         ))}
       </div>
     );
   }
 
-  function RenderCTABanner({ conceptIndex }: { conceptIndex: number }) {
+  function RenderCTABanner({ conceptIndex, style }: { conceptIndex: number; style: SectionStyle }) {
+    const bg = style.bg_color || colors.primary;
+    const text = style.text_color || "#ffffff";
+    const heading = style.heading_color || "#ffffff";
+    const accent = style.accent_color || colors.accent;
+    const btnBg = style.btn_primary_bg || "#ffffff";
+    const btnText = style.btn_primary_text || colors.primary;
+
     // Concept 2: Glassmorphic alert panel layout
     if (conceptIndex === 2) {
       return (
-        <div style={{ padding: "40px" }}>
+        <div style={{ padding: "40px", background: colors.background }}>
           <div style={{
-            background: colors.primary,
+            background: bg,
             border: `1px solid ${colors.text_muted}15`,
             borderRadius: 16,
             padding: "36px 40px",
@@ -453,12 +515,12 @@ export function PageConcept({ payload }: Props) {
             gap: 24,
           }}>
             <div>
-              <span style={{ fontSize: 10, fontWeight: 700, color: colors.accent, textTransform: "uppercase", letterSpacing: "0.05em" }}>Next Step</span>
-              <h4 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginTop: 4, margin: 0 }}>Have custom guidelines or brand needs?</h4>
+              <span style={{ fontSize: 10, fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.05em" }}>Next Step</span>
+              <h4 style={{ fontSize: 20, fontWeight: 700, color: heading, marginTop: 4, margin: 0 }}>{copy.cta.title}</h4>
             </div>
             <button style={{
-              background: colors.accent,
-              color: getContrastColor(colors.accent),
+              background: btnBg,
+              color: btnText,
               border: "none",
               borderRadius: 6,
               padding: "12px 24px",
@@ -466,7 +528,7 @@ export function PageConcept({ payload }: Props) {
               fontWeight: 700,
               cursor: "pointer",
             }}>
-              Talk to Designer
+              {copy.cta.button_text}
             </button>
           </div>
         </div>
@@ -489,16 +551,16 @@ export function PageConcept({ payload }: Props) {
         }}>
           <div>
             <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, color: colors.text, margin: 0 }}>
-              Subscribe to newsletter
+              {copy.cta.title}
             </h3>
             <p style={{ fontSize: 13, color: colors.text_muted, marginTop: 8, margin: 0 }}>
-              Get weekly branding recommendations and UI design tokens.
+              {copy.cta.subtitle}
             </p>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             <input type="email" placeholder="Your Email Address" style={{ flex: 1, padding: "12px", borderRadius: 8, border: `1px solid ${colors.text_muted}22`, background: colors.background, color: colors.text, fontSize: 13 }} />
-            <button style={{ background: colors.accent, color: getContrastColor(colors.accent), border: "none", borderRadius: 8, padding: "0 20px", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
-              Subscribe
+            <button style={{ background: accent, color: getContrastColor(accent), border: "none", borderRadius: 8, padding: "0 20px", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+              {copy.cta.button_text}
             </button>
           </div>
         </div>
@@ -508,8 +570,8 @@ export function PageConcept({ payload }: Props) {
     // Concept 0: centered layout block (Default)
     return (
       <div style={{
-        background: colors.primary,
-        color: "#ffffff",
+        background: bg,
+        color: text,
         padding: "50px 40px",
         textAlign: "center",
         display: "flex",
@@ -521,16 +583,17 @@ export function PageConcept({ payload }: Props) {
           fontFamily: `'${typography.heading.family}', sans-serif`,
           fontWeight: 700,
           fontSize: 30,
+          color: heading,
           margin: 0,
         }}>
-          Ready to scale your business?
+          {copy.cta.title}
         </h3>
         <p style={{ fontSize: 13, opacity: 0.85, maxWidth: 460, margin: 0 }}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
+          {copy.cta.subtitle}
         </p>
         <button style={{
-          background: "#ffffff",
-          color: colors.primary,
+          background: btnBg,
+          color: btnText,
           border: "none",
           borderRadius: 8,
           padding: "12px 28px",
@@ -539,26 +602,33 @@ export function PageConcept({ payload }: Props) {
           cursor: "pointer",
           marginTop: 8,
         }}>
-          Book Appointment
+          {copy.cta.button_text}
         </button>
       </div>
     );
   }
 
-  function RenderPricing({ conceptIndex }: { conceptIndex: number }) {
+  function RenderPricing({ conceptIndex, style }: { conceptIndex: number; style: SectionStyle }) {
+    const bg = style.bg_color || colors.background;
+    const text = style.text_color || colors.text_muted;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.accent;
+    const btnBg = style.btn_primary_bg || colors.primary;
+    const btnText = style.btn_primary_text || "#ffffff";
+
     // Concept 2: Monthly/Annual switcher cards
     if (conceptIndex === 2) {
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, alignItems: "center" }}>
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, alignItems: "center", background: bg }}>
           <div style={{ textAlign: "center" }}>
-            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: colors.text }}>Transparent Pricing</h3>
+            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: heading }}>Pricing Plans</h3>
             {/* Toggle Switch switcher */}
             <div style={{ display: "inline-flex", background: `${colors.primary}12`, padding: 4, borderRadius: 8, marginTop: 14 }}>
               <button
                 onClick={() => setBillingPeriod("monthly")}
                 style={{
                   background: billingPeriod === "monthly" ? colors.primary : "transparent",
-                  color: billingPeriod === "monthly" ? "#fff" : colors.text_muted,
+                  color: billingPeriod === "monthly" ? getContrastColor(colors.primary) : colors.text_muted,
                   border: "none", borderRadius: 6, padding: "6px 16px", fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "all 0.2s"
                 }}
               >
@@ -568,7 +638,7 @@ export function PageConcept({ payload }: Props) {
                 onClick={() => setBillingPeriod("annual")}
                 style={{
                   background: billingPeriod === "annual" ? colors.primary : "transparent",
-                  color: billingPeriod === "annual" ? "#fff" : colors.text_muted,
+                  color: billingPeriod === "annual" ? getContrastColor(colors.primary) : colors.text_muted,
                   border: "none", borderRadius: 6, padding: "6px 16px", fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "all 0.2s"
                 }}
               >
@@ -578,10 +648,7 @@ export function PageConcept({ payload }: Props) {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, width: "100%", maxWidth: 640 }}>
-            {[
-              { name: "Team Tier", monthly: "$89", annual: "$71", items: ["3 Active seats", "Standard assets export"] },
-              { name: "Pro Plan", monthly: "$189", annual: "$151", items: ["Unlimited seats", "Priority custom sitemaps"] }
-            ].map((p, idx) => (
+            {copy.pricing.slice(0, 2).map((p, idx) => (
               <div key={idx} style={{
                 background: colors.surface,
                 border: `1px solid ${colors.text_muted}15`,
@@ -591,17 +658,17 @@ export function PageConcept({ payload }: Props) {
                 flexDirection: "column",
                 gap: 16,
               }}>
-                <h4 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: 0 }}>{p.name}</h4>
-                <p style={{ fontSize: 32, fontWeight: 800, color: colors.text, margin: 0 }}>
-                  {billingPeriod === "monthly" ? p.monthly : p.annual}
-                  <span style={{ fontSize: 12, color: colors.text_muted, fontWeight: 400 }}>/mo</span>
+                <h4 style={{ fontSize: 16, fontWeight: 600, color: heading, margin: 0 }}>{p.name}</h4>
+                <p style={{ fontSize: 32, fontWeight: 800, color: heading, margin: 0 }}>
+                  {billingPeriod === "monthly" ? p.price : `$${parseInt(p.price.replace("$", "")) * 8}`}
+                  <span style={{ fontSize: 12, color: text, fontWeight: 400 }}>/mo</span>
                 </p>
                 <hr style={{ borderColor: `${colors.text_muted}10`, margin: "8px 0" }} />
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 12, color: colors.text_muted }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 12, color: text }}>
                   {p.items.map((it, i) => <div key={i}>✓ {it}</div>)}
                 </div>
-                <button style={{ background: colors.primary, color: "#fff", border: "none", borderRadius: 6, padding: "10px", fontSize: 12, fontWeight: 600, cursor: "pointer", width: "100%", marginTop: 12 }}>
-                  Subscribe
+                <button style={{ background: btnBg, color: btnText, border: "none", borderRadius: 6, padding: "10px", fontSize: 12, fontWeight: 600, cursor: "pointer", width: "100%", marginTop: 12 }}>
+                  Choose Plan
                 </button>
               </div>
             ))}
@@ -612,16 +679,17 @@ export function PageConcept({ payload }: Props) {
 
     // Concept 1: Horizontal spotlight recommendation plan
     if (conceptIndex === 1) {
+      const topPlan = copy.pricing[1] || copy.pricing[0];
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: colors.primary }}>Recommended Plan</p>
-            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, color: colors.text, marginTop: 4 }}>Get the best value</h3>
+            <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: accent }}>Recommended Plan</p>
+            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, color: heading, marginTop: 4 }}>Get the best value</h3>
           </div>
           <div style={{
             background: colors.surface,
             borderRadius: 16,
-            border: `2px solid ${colors.primary}`,
+            border: `2px solid ${accent}`,
             padding: 40,
             display: "grid",
             gridTemplateColumns: "1.5fr 1fr",
@@ -630,25 +698,23 @@ export function PageConcept({ payload }: Props) {
           }}>
             <div>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <h4 style={{ fontSize: 20, fontWeight: 700, color: colors.text, margin: 0 }}>Pro Unlimited Package</h4>
-                <span style={{ background: colors.accent, color: getContrastColor(colors.accent), fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 9999 }}>POPULAR</span>
+                <h4 style={{ fontSize: 20, fontWeight: 700, color: heading, margin: 0 }}>{topPlan.name}</h4>
+                <span style={{ background: accent, color: getContrastColor(accent), fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 9999 }}>POPULAR</span>
               </div>
-              <p style={{ fontSize: 13, color: colors.text_muted, marginTop: 8, lineHeight: 1.6, margin: 0 }}>
-                Ideal for teams requiring custom branding layouts and continuous Figma exports.
+              <p style={{ fontSize: 13, color: text, marginTop: 8, lineHeight: 1.6, margin: 0 }}>
+                {topPlan.desc}
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 20, fontSize: 12, color: colors.text_muted }}>
-                <div>✓ Custom typography settings</div>
-                <div>✓ 5 Parallel image jobs</div>
-                <div>✓ Absolute SVG sitemaps</div>
-                <div>✓ 24/7 Priority consults</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 20, fontSize: 12, color: text }}>
+                {topPlan.items.map((it, idx) => (
+                  <div key={idx}>✓ {it}</div>
+                ))}
               </div>
             </div>
             <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 12 }}>
-              <p style={{ fontSize: 44, fontWeight: 800, color: colors.text, margin: 0 }}>$199<span style={{ fontSize: 16, fontWeight: 400, color: colors.text_muted }}>/mo</span></p>
-              <button style={{ background: colors.primary, color: "#fff", border: "none", borderRadius: 8, padding: "12px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer", width: "100%" }}>
+              <p style={{ fontSize: 44, fontWeight: 800, color: heading, margin: 0 }}>{topPlan.price}<span style={{ fontSize: 16, fontWeight: 400, color: text }}>/mo</span></p>
+              <button style={{ background: btnBg, color: btnText, border: "none", borderRadius: 8, padding: "12px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer", width: "100%" }}>
                 Select Plan
               </button>
-              <p style={{ fontSize: 10, color: colors.text_muted, margin: 0 }}>Cancel anytime. No lock-in contracts.</p>
             </div>
           </div>
         </div>
@@ -657,45 +723,38 @@ export function PageConcept({ payload }: Props) {
 
     // Concept 0: 3 columns card grid (Default)
     return (
-      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32 }}>
+      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32, background: bg }}>
         <div style={{ textAlign: "center" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: colors.primary }}>Pricing Plans</p>
-          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: colors.text, marginTop: 6 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: accent }}>Pricing Plans</p>
+          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: heading, marginTop: 6 }}>
             Simple plans for everyone
           </h3>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-          {[
-            { name: "Starter", price: "$49", desc: "Basic sitemap & concept layout" },
-            { name: "Professional", price: "$149", desc: "Complete high-fidelity style guide" },
-            { name: "Enterprise", price: "$299", desc: "Fully tailored branding concept" },
-          ].map((plan, idx) => {
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${copy.pricing.length}, 1fr)`, gap: 20 }}>
+          {copy.pricing.map((plan, idx) => {
             const isFeatured = idx === 1;
             return (
               <div key={idx} style={{
                 background: colors.surface,
                 borderRadius: 12,
-                border: isFeatured ? `2px solid ${colors.primary}` : `1px solid ${colors.text_muted}15`,
+                border: isFeatured ? `2px solid ${accent}` : `1px solid ${colors.text_muted}15`,
                 padding: 30,
                 display: "flex",
                 flexDirection: "column",
                 gap: 16,
                 transform: isFeatured ? "scale(1.03)" : "none",
               }}>
-                <p style={{ fontSize: 13, color: colors.text_muted, fontWeight: 600, margin: 0 }}>{plan.name}</p>
-                <p style={{ fontSize: 36, fontWeight: 700, color: colors.text, margin: 0 }}>{plan.price}<span style={{ fontSize: 14, fontWeight: 400, color: colors.text_muted }}>/mo</span></p>
-                <p style={{ fontSize: 11, color: colors.text_muted, margin: 0 }}>{plan.desc}</p>
+                <p style={{ fontSize: 13, color: text, fontWeight: 600, margin: 0 }}>{plan.name}</p>
+                <p style={{ fontSize: 36, fontWeight: 700, color: heading, margin: 0 }}>{plan.price}<span style={{ fontSize: 14, fontWeight: 400, color: text }}>/mo</span></p>
+                <p style={{ fontSize: 11, color: text, margin: 0 }}>{plan.desc}</p>
                 <hr style={{ borderColor: `${colors.text_muted}15` }} />
-                <ul style={{ fontSize: 11, color: colors.text_muted, listStyle: "none", display: "flex", flexDirection: "column", gap: 8, padding: 0, margin: 0 }}>
-                  <li>✓ 10 Questionnaire items</li>
-                  <li>✓ AI Palette Suggestion</li>
-                  <li>✓ Sitemap Tree layout</li>
-                  <li>✓ Max 2 Regenerations</li>
+                <ul style={{ fontSize: 11, color: text, listStyle: "none", display: "flex", flexDirection: "column", gap: 8, padding: 0, margin: 0 }}>
+                  {plan.items.map((item, idx) => <li key={idx}>✓ {item}</li>)}
                 </ul>
                 <button style={{
-                  background: isFeatured ? colors.accent : "transparent",
-                  color: isFeatured ? getContrastColor(colors.accent) : colors.text,
+                  background: isFeatured ? accent : "transparent",
+                  color: isFeatured ? getContrastColor(accent) : heading,
                   border: isFeatured ? "none" : `1px solid ${colors.text_muted}`,
                   borderRadius: 6,
                   padding: "10px",
@@ -714,32 +773,32 @@ export function PageConcept({ payload }: Props) {
     );
   }
 
-  function RenderFAQ({ conceptIndex }: { conceptIndex: number }) {
+  function RenderFAQ({ conceptIndex, style }: { conceptIndex: number; style: SectionStyle }) {
+    const bg = style.bg_color || colors.background;
+    const text = style.text_color || colors.text_muted;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.accent;
+
     // Concept 2: Outlined boxes matrix tabs
     if (conceptIndex === 2) {
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
-          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, textAlign: "center", color: colors.text }}>
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
+          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, textAlign: "center", color: heading }}>
             FAQ Matrix
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            {[
-              { q: "Is the logo generated unique?", a: "Yes, our pipeline creates bespoke vector branding tokens using Google Gemini." },
-              { q: "Can I upgrade my subscription?", a: "Absolutely. Select any of the pricing cards above to upgrade directly." },
-              { q: "What is your revision policy?", a: "We support up to 2 full regenerations via client sitemap feedback comment logs." },
-              { q: "Do you export SVG assets?", a: "All generated visuals and maps can be saved directly in standard formats." },
-            ].map((item, idx) => (
+            {copy.faq.map((item, idx) => (
               <div key={idx} style={{
                 background: colors.surface,
-                border: `1.5px solid ${colors.primary}22`,
+                border: `1.5px solid ${accent}22`,
                 borderRadius: 10,
                 padding: 20,
                 display: "flex",
                 flexDirection: "column",
                 gap: 8,
               }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: colors.primary }}>Q: {item.q}</span>
-                <p style={{ fontSize: 12, color: colors.text_muted, lineHeight: 1.5, margin: 0 }}>{item.a}</p>
+                <span style={{ fontSize: 13, fontWeight: 700, color: accent }}>Q: {item.q}</span>
+                <p style={{ fontSize: 12, color: text, lineHeight: 1.5, margin: 0 }}>{item.a}</p>
               </div>
             ))}
           </div>
@@ -750,22 +809,16 @@ export function PageConcept({ payload }: Props) {
     // Concept 1: Two-column grid (Sidebar category left, Questions right)
     if (conceptIndex === 1) {
       return (
-        <div style={{ padding: "50px 40px", display: "grid", gridTemplateColumns: "200px 1fr", gap: 30 }}>
+        <div style={{ padding: "50px 40px", display: "grid", gridTemplateColumns: "200px 1fr", gap: 30, background: bg }}>
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: colors.primary }}>Help Center</p>
-            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 24, color: colors.text, marginTop: 4 }}>Common Queries</h3>
+            <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: accent }}>Help Center</p>
+            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 24, color: heading, marginTop: 4 }}>Common Queries</h3>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {[
-              "How do sitemaps connect?",
-              "What model runs image jobs?",
-              "Can I run test random personas?",
-            ].map((q, i) => (
+            {copy.faq.map((item, i) => (
               <div key={i} style={{ borderBottom: `1px solid ${colors.text_muted}10`, paddingBottom: 12 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: colors.text, margin: 0 }}>{q}</p>
-                <p style={{ fontSize: 12, color: colors.text_muted, marginTop: 6, margin: 0 }}>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                </p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: heading, margin: 0 }}>{item.q}</p>
+                <p style={{ fontSize: 12, color: text, marginTop: 6, margin: 0 }}>{item.a}</p>
               </div>
             ))}
           </div>
@@ -775,17 +828,12 @@ export function PageConcept({ payload }: Props) {
 
     // Concept 0: standard Accordions list (Default)
     return (
-      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, maxWidth: 640, margin: "0 auto" }}>
-        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, textAlign: "center", color: colors.text, margin: 0 }}>
+      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, maxWidth: 640, margin: "0 auto", background: bg }}>
+        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, textAlign: "center", color: heading, margin: 0 }}>
           Frequently Asked Questions
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {[
-            "How does the AI generate my website concept?",
-            "Can I import this style guide into Figma?",
-            "What if I need to change my answers?",
-            "How many revisions are allowed?",
-          ].map((q, i) => (
+          {copy.faq.map((item, i) => (
             <div key={i} style={{
               background: colors.surface,
               borderRadius: 10,
@@ -796,8 +844,8 @@ export function PageConcept({ payload }: Props) {
               cursor: "pointer",
               border: `1px solid ${colors.text_muted}10`,
             }}>
-              <span style={{ fontSize: 13, fontWeight: 500, color: colors.text }}>{q}</span>
-              <span style={{ fontSize: 14, color: colors.text_muted }}>+</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: heading }}>{item.q}</span>
+              <span style={{ fontSize: 14, color: text }}>+</span>
             </div>
           ))}
         </div>
@@ -805,23 +853,21 @@ export function PageConcept({ payload }: Props) {
     );
   }
 
-  function RenderTeam({ conceptIndex }: { conceptIndex: number }) {
-    const teamMembers = [
-      { name: "John Doe", role: "Design Lead", emoji: "👤" },
-      { name: "Jane Smith", role: "AI Engineer", emoji: "👩‍💻" },
-      { name: "Cody Fisher", role: "Product Manager", emoji: "👨‍💼" },
-      { name: "Alice Cooper", role: "Branding Consultant", emoji: "👩‍💼" }
-    ];
+  function RenderTeam({ conceptIndex, style }: { conceptIndex: number; style: SectionStyle }) {
+    const bg = style.bg_color || colors.background;
+    const text = style.text_color || colors.text_muted;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.primary;
 
     // Concept 2: Staggered wide profile cards (2 columns wide profile rows)
     if (conceptIndex === 2) {
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32 }}>
-          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: colors.text }}>
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32, background: bg }}>
+          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: heading }}>
             Our Leaders
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            {teamMembers.slice(0, 2).map((m, i) => (
+            {copy.team.map((m, i) => (
               <div key={i} style={{
                 background: colors.surface,
                 border: `1px solid ${colors.text_muted}15`,
@@ -831,13 +877,13 @@ export function PageConcept({ payload }: Props) {
                 alignItems: "center",
                 gap: 20,
               }}>
-                <div style={{ width: 64, height: 64, borderRadius: "50%", background: `${colors.primary}12`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
+                <div style={{ width: 64, height: 64, borderRadius: "50%", background: `${accent}12`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
                   {m.emoji}
                 </div>
                 <div>
-                  <h4 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: 0 }}>{m.name}</h4>
-                  <p style={{ fontSize: 11, color: colors.primary, fontWeight: 600, marginTop: 2, margin: 0 }}>{m.role}</p>
-                  <p style={{ fontSize: 12, color: colors.text_muted, marginTop: 6, margin: 0 }}>Experienced strategist leading brand deployment concept tokens.</p>
+                  <h4 style={{ fontSize: 16, fontWeight: 600, color: heading, margin: 0 }}>{m.name}</h4>
+                  <p style={{ fontSize: 11, color: accent, fontWeight: 600, marginTop: 2, margin: 0 }}>{m.role}</p>
+                  <p style={{ fontSize: 12, color: text, marginTop: 6, margin: 0 }}>{m.bio}</p>
                 </div>
               </div>
             ))}
@@ -849,15 +895,15 @@ export function PageConcept({ payload }: Props) {
     // Concept 1: 3 columns card badge frames
     if (conceptIndex === 1) {
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
-          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: colors.text }}>
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
+          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: heading }}>
             Expert Advisors
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-            {teamMembers.slice(0, 3).map((m, i) => (
+            {copy.team.slice(0, 3).map((m, i) => (
               <div key={i} style={{
                 background: colors.surface,
-                border: `2px solid ${colors.primary}`,
+                border: `2px solid ${accent}`,
                 borderRadius: 10,
                 padding: "24px 16px",
                 textAlign: "center",
@@ -867,8 +913,8 @@ export function PageConcept({ payload }: Props) {
                 gap: 12,
               }}>
                 <div style={{ fontSize: 32 }}>{m.emoji}</div>
-                <h4 style={{ fontSize: 14, fontWeight: 700, color: colors.text, margin: 0 }}>{m.name}</h4>
-                <span style={{ background: `${colors.primary}15`, color: colors.primary, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4 }}>
+                <h4 style={{ fontSize: 14, fontWeight: 700, color: heading, margin: 0 }}>{m.name}</h4>
+                <span style={{ background: `${accent}15`, color: accent, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4 }}>
                   {m.role}
                 </span>
               </div>
@@ -880,18 +926,18 @@ export function PageConcept({ payload }: Props) {
 
     // Concept 0: standard circular team grid (Default)
     return (
-      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32 }}>
-        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: colors.text, margin: 0 }}>
+      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32, background: bg }}>
+        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: heading, margin: 0 }}>
           Meet Our Team
         </h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
-          {teamMembers.map((member, i) => (
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(copy.team.length, 4)}, 1fr)`, gap: 20 }}>
+          {copy.team.map((member, i) => (
             <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 80, height: 80, borderRadius: "50%", background: colors.surface, border: `1px solid ${colors.primary}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
+              <div style={{ width: 80, height: 80, borderRadius: "50%", background: colors.surface, border: `1px solid ${accent}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
                 {member.emoji}
               </div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: colors.text, margin: 0 }}>{member.name}</p>
-              <p style={{ fontSize: 11, color: colors.text_muted, margin: 0 }}>{member.role}</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: heading, margin: 0 }}>{member.name}</p>
+              <p style={{ fontSize: 11, color: text, margin: 0 }}>{member.role}</p>
             </div>
           ))}
         </div>
@@ -899,7 +945,11 @@ export function PageConcept({ payload }: Props) {
     );
   }
 
-  function RenderGallery({ conceptIndex }: { conceptIndex: number }) {
+  function RenderGallery({ conceptIndex, style }: { conceptIndex: number; style: SectionStyle }) {
+    const bg = style.bg_color || colors.background;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.accent;
+
     const imagesToUse = moodboard_images && moodboard_images.length > 0
       ? moodboard_images.slice(0, 6)
       : Array.from({ length: 6 }).map(() => "");
@@ -907,14 +957,14 @@ export function PageConcept({ payload }: Props) {
     // Concept 2: Staggered horizontal scrolling carousel mockup cards layout
     if (conceptIndex === 2) {
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: colors.text, margin: 0 }}>
+            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: heading, margin: 0 }}>
               Visual Stylescape
             </h3>
             <div style={{ display: "flex", gap: 8 }}>
-              <button style={{ width: 32, height: 32, borderRadius: "50%", background: colors.surface, border: `1px solid ${colors.text_muted}15`, color: colors.text, fontSize: 12, cursor: "pointer" }}>←</button>
-              <button style={{ width: 32, height: 32, borderRadius: "50%", background: colors.surface, border: `1px solid ${colors.text_muted}15`, color: colors.text, fontSize: 12, cursor: "pointer" }}>→</button>
+              <button style={{ width: 32, height: 32, borderRadius: "50%", background: colors.surface, border: `1px solid ${colors.text_muted}15`, color: heading, fontSize: 12, cursor: "pointer" }}>←</button>
+              <button style={{ width: 32, height: 32, borderRadius: "50%", background: colors.surface, border: `1px solid ${colors.text_muted}15`, color: heading, fontSize: 12, cursor: "pointer" }}>→</button>
             </div>
           </div>
           <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 10 }}>
@@ -945,8 +995,8 @@ export function PageConcept({ payload }: Props) {
     // Concept 1: Staggered height masonry blocks
     if (conceptIndex === 1) {
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
-          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: colors.text, margin: 0 }}>
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
+          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: heading, margin: 0 }}>
             Branding Showcase
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, alignItems: "start" }}>
@@ -977,8 +1027,8 @@ export function PageConcept({ payload }: Props) {
 
     // Concept 0: standard clean 3x2 grid (Default)
     return (
-      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
-        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: colors.text, margin: 0 }}>
+      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
+        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: heading, margin: 0 }}>
           Visual Gallery
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
@@ -1004,57 +1054,49 @@ export function PageConcept({ payload }: Props) {
     );
   }
 
-  function RenderShopProductGrid({ conceptIndex }: { conceptIndex: number }) {
-    const products = [
-      { name: "Premium Branding Kit", price: "$99.00", cat: "Branding", rating: "5★", emoji: "🎨" },
-      { name: "Fullstack Web App Template", price: "$149.00", cat: "Development", rating: "5★", emoji: "⚡" },
-      { name: "UX Wireframing Guide", price: "$29.00", cat: "Design Resources", rating: "4★", emoji: "📐" },
-      { name: "Custom Icon Pack (SVG)", price: "$19.00", cat: "Design Resources", rating: "4★", emoji: "✨" },
-      { name: "Consulting Session (1 Hr)", price: "$120.00", cat: "Consulting", rating: "5★", emoji: "📞" },
-      { name: "Tailwind UI Components", price: "$79.00", cat: "Development", rating: "4★", emoji: "📦" },
-    ];
+  function RenderShopProductGrid({ conceptIndex, style }: { conceptIndex: number; style: SectionStyle }) {
+    const bg = style.bg_color || colors.background;
+    const text = style.text_color || colors.text_muted;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.accent;
+    const btnBg = style.btn_primary_bg || colors.primary;
+    const btnText = style.btn_primary_text || "#ffffff";
 
     // Concept 2: Single product spotlight detailed view (Spotlight hero display detailed view)
     if (conceptIndex === 2) {
+      const topProd = copy.products[0];
       return (
-        <div style={{ padding: "50px 40px", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40, alignItems: "center" }}>
+        <div style={{ padding: "50px 40px", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40, alignItems: "center", background: bg }}>
           {/* Left: Product image */}
           <div style={{
             height: 280,
             borderRadius: 12,
-            background: `${colors.primary}10`,
+            background: `${accent}10`,
             border: `1px solid ${colors.text_muted}15`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 80,
           }}>
-            🎨
+            {topProd.emoji}
           </div>
           {/* Right: Product details description */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: colors.primary, textTransform: "uppercase" }}>Featured Product</span>
-            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 800, fontSize: 28, color: colors.text, margin: 0 }}>
-              Premium Branding Kit
+            <span style={{ fontSize: 10, fontWeight: 700, color: accent, textTransform: "uppercase" }}>Featured Product</span>
+            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 800, fontSize: 28, color: heading, margin: 0 }}>
+              {topProd.name}
             </h3>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 13, color: colors.primary, fontWeight: 700 }}>★★★★★</span>
-              <span style={{ fontSize: 11, color: colors.text_muted }}>(24 client reviews)</span>
+              <span style={{ fontSize: 13, color: accent, fontWeight: 700 }}>★★★★★</span>
+              <span style={{ fontSize: 11, color: text }}>(24 client reviews)</span>
             </div>
-            <p style={{ fontSize: 32, fontWeight: 800, color: colors.text, margin: 0 }}>$99.00</p>
-            <p style={{ fontSize: 13, color: colors.text_muted, lineHeight: 1.6, margin: 0 }}>
-              Get our complete corporate visual guidelines guide bundle, including vector templates, palettes presets, and font pairing recommendations.
+            <p style={{ fontSize: 32, fontWeight: 800, color: heading, margin: 0 }}>{topProd.price}</p>
+            <p style={{ fontSize: 13, color: text, lineHeight: 1.6, margin: 0 }}>
+              Get our complete premium resource package detailed bundle matching the business category.
             </p>
-            {/* Mock options */}
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <span style={{ fontSize: 11, color: colors.text_muted, fontWeight: 600 }}>Color option:</span>
-              {["#000", colors.primary, colors.accent].map((col, idx) => (
-                <span key={idx} style={{ width: 16, height: 16, borderRadius: "50%", background: col, border: "2px solid #fff", cursor: "pointer" }} />
-              ))}
-            </div>
             <button style={{
-              background: colors.primary,
-              color: "#fff",
+              background: btnBg,
+              color: btnText,
               border: "none",
               borderRadius: 8,
               padding: "14px 28px",
@@ -1073,31 +1115,14 @@ export function PageConcept({ payload }: Props) {
     // Concept 1: Full-width 4-column minimal catalog (No sidebar, top filters)
     if (conceptIndex === 1) {
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${colors.text_muted}10`, paddingBottom: 16 }}>
             <div>
-              <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 24, color: colors.text, margin: 0 }}>Store Catalog</h3>
-              <p style={{ fontSize: 12, color: colors.text_muted, marginTop: 4, margin: 0 }}>Showing all 6 premium mock listings</p>
-            </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              {["All Items", "Design", "Dev", "Consulting"].map((btn, i) => (
-                <button key={i} style={{
-                  background: i === 0 ? colors.primary : "transparent",
-                  color: i === 0 ? "#fff" : colors.text_muted,
-                  border: `1.5px solid ${i === 0 ? colors.primary : `${colors.text_muted}22`}`,
-                  borderRadius: 6,
-                  padding: "6px 14px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}>
-                  {btn}
-                </button>
-              ))}
+              <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 24, color: heading, margin: 0 }}>Store Catalog</h3>
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-            {products.slice(0, 4).map((p, i) => (
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(copy.products.length, 4)}, 1fr)`, gap: 16 }}>
+            {copy.products.slice(0, 4).map((p, i) => (
               <div key={i} style={{
                 background: colors.surface,
                 border: `1px solid ${colors.text_muted}15`,
@@ -1106,15 +1131,15 @@ export function PageConcept({ payload }: Props) {
                 display: "flex",
                 flexDirection: "column",
               }}>
-                <div style={{ height: 130, background: `${colors.primary}08`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>
+                <div style={{ height: 130, background: `${accent}08`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>
                   {p.emoji}
                 </div>
                 <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-                  <h4 style={{ fontSize: 13, fontWeight: 700, color: colors.text, margin: 0 }}>{p.name}</h4>
-                  <p style={{ fontSize: 12, fontWeight: 800, color: colors.primary, marginTop: "auto", margin: 0 }}>{p.price}</p>
+                  <h4 style={{ fontSize: 13, fontWeight: 700, color: heading, margin: 0 }}>{p.name}</h4>
+                  <p style={{ fontSize: 12, fontWeight: 800, color: accent, marginTop: "auto", margin: 0 }}>{p.price}</p>
                   <button style={{
-                    background: `${colors.primary}12`,
-                    color: colors.primary,
+                    background: `${accent}12`,
+                    color: accent,
                     border: "none",
                     borderRadius: 6,
                     padding: "8px",
@@ -1134,49 +1159,25 @@ export function PageConcept({ payload }: Props) {
 
     // Concept 0: Split-grid with filter sidebar (Default)
     return (
-      <div style={{ padding: "50px 40px", display: "grid", gridTemplateColumns: "220px 1fr", gap: 30 }}>
+      <div style={{ padding: "50px 40px", display: "grid", gridTemplateColumns: "220px 1fr", gap: 30, background: bg }}>
         {/* Sidebar filters */}
         <div style={{ display: "flex", flexDirection: "column", gap: 24, borderRight: `1px solid ${colors.text_muted}15`, paddingRight: 20 }}>
           <div>
-            <p style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", color: colors.primary, marginBottom: 12 }}>Categories</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12, color: colors.text_muted }}>
-              {["All Items", "Design Resources", "Development", "Branding", "Consulting"].map((cat, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", cursor: "pointer", color: i === 0 ? colors.text : colors.text_muted }}>
+            <p style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", color: accent, marginBottom: 12 }}>Categories</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12, color: text }}>
+              {["All Items", "Core offerings", "Consulting", "Branding"].map((cat, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", cursor: "pointer", color: i === 0 ? heading : text }}>
                   <span>{cat}</span>
-                  <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>({[12, 4, 3, 2, 3][i]})</span>
                 </div>
               ))}
-            </div>
-          </div>
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", color: colors.primary, marginBottom: 12 }}>Filter by Price</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ height: 4, background: `${colors.primary}20`, borderRadius: 2, position: "relative" }}>
-                <div style={{ position: "absolute", left: "20%", right: "30%", height: "100%", background: colors.primary }} />
-                <div style={{ position: "absolute", left: "20%", top: -4, width: 12, height: 12, borderRadius: "50%", background: "#fff", border: `2px solid ${colors.primary}` }} />
-                <div style={{ position: "absolute", right: "30%", top: -4, width: 12, height: 12, borderRadius: "50%", background: "#fff", border: `2px solid ${colors.primary}` }} />
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: colors.text_muted, marginTop: 8 }}>
-                <span>Min: $10</span>
-                <span>Max: $300</span>
-              </div>
             </div>
           </div>
         </div>
 
         {/* Product listing grid */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${colors.text_muted}10`, paddingBottom: 12 }}>
-            <p style={{ fontSize: 12, color: colors.text_muted, margin: 0 }}>Showing 6 products</p>
-            <select style={{ background: colors.surface, color: colors.text, border: `1px solid ${colors.text_muted}22`, borderRadius: 6, padding: "4px 8px", fontSize: 11 }}>
-              <option>Sort by: Featured</option>
-              <option>Price: Low to High</option>
-              <option>Price: High to Low</option>
-            </select>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-            {products.map((p, i) => (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+            {copy.products.map((p, i) => (
               <div key={i} style={{
                 background: colors.surface,
                 border: `1px solid ${colors.text_muted}15`,
@@ -1185,19 +1186,19 @@ export function PageConcept({ payload }: Props) {
                 display: "flex",
                 flexDirection: "column",
               }}>
-                <div style={{ height: 120, background: `${colors.primary}10`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>
+                <div style={{ height: 120, background: `${accent}10`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>
                   {p.emoji}
                 </div>
                 <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-                  <span style={{ fontSize: 9, color: colors.primary, fontWeight: 700 }}>{p.cat}</span>
-                  <h4 style={{ fontSize: 13, fontWeight: 600, color: colors.text, lineHeight: 1.4, margin: 0 }}>{p.name}</h4>
+                  <span style={{ fontSize: 9, color: accent, fontWeight: 700 }}>{p.cat}</span>
+                  <h4 style={{ fontSize: 13, fontWeight: 600, color: heading, lineHeight: 1.4, margin: 0 }}>{p.name}</h4>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: colors.text }}>{p.price}</span>
-                    <span style={{ fontSize: 10, color: colors.text_muted }}>{p.rating}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: heading }}>{p.price}</span>
+                    <span style={{ fontSize: 10, color: text }}>{p.rating}</span>
                   </div>
                   <button style={{
-                    background: colors.primary,
-                    color: "#fff",
+                    background: btnBg,
+                    color: btnText,
                     border: "none",
                     borderRadius: 6,
                     padding: "8px",
@@ -1217,23 +1218,21 @@ export function PageConcept({ payload }: Props) {
     );
   }
 
-  function RenderServicesList({ conceptIndex }: { conceptIndex: number }) {
-    const listItems = [
-      { title: "Brand Identity Design", desc: "Logo design, color guidelines, typography mappings, and stationery sets.", tag: "Popular", emoji: "🎨" },
-      { title: "Custom Website Development", desc: "Responsive full-stack builds using modern server-side tech and headless CMS integrations.", tag: "Featured", emoji: "⚡" },
-      { title: "SEO Optimization & Auditing", desc: "Detailed keyword mapping and technical speed indexing optimization.", tag: "SEO", emoji: "📈" },
-      { title: "Consulting & Strategy", desc: "Weekly consulting sessions to scale up conversions.", tag: "New", emoji: "📞" }
-    ];
+  function RenderServicesList({ conceptIndex, style }: { conceptIndex: number; style: SectionStyle }) {
+    const bg = style.bg_color || colors.background;
+    const text = style.text_color || colors.text_muted;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.accent;
 
     // Concept 2: 2x2 grid offset list layout
     if (conceptIndex === 2) {
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
-          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: colors.text, margin: 0 }}>
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
+          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: heading, margin: 0 }}>
             Our Specializations
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            {listItems.map((item, idx) => (
+            {copy.services.map((item, idx) => (
               <div key={idx} style={{
                 background: colors.surface,
                 border: `1px solid ${colors.text_muted}12`,
@@ -1244,8 +1243,8 @@ export function PageConcept({ payload }: Props) {
               }}>
                 <span style={{ fontSize: 28 }}>{item.emoji}</span>
                 <div>
-                  <h4 style={{ fontSize: 15, fontWeight: 700, color: colors.text, margin: 0 }}>{item.title}</h4>
-                  <p style={{ fontSize: 12, color: colors.text_muted, marginTop: 6, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+                  <h4 style={{ fontSize: 15, fontWeight: 700, color: heading, margin: 0 }}>{item.title}</h4>
+                  <p style={{ fontSize: 12, color: text, marginTop: 6, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -1257,22 +1256,21 @@ export function PageConcept({ payload }: Props) {
     // Concept 1: Service column grid with category tabs
     if (conceptIndex === 1) {
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 20, background: bg }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, color: colors.text, margin: 0 }}>Solutions Overview</h3>
-            <span style={{ fontSize: 12, color: colors.primary, fontWeight: 700, cursor: "pointer" }}>View all solutions →</span>
+            <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, color: heading, margin: 0 }}>Solutions Overview</h3>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-            {listItems.slice(0, 3).map((item, i) => (
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(copy.services.length, 3)}, 1fr)`, gap: 16 }}>
+            {copy.services.slice(0, 3).map((item, i) => (
               <div key={i} style={{
                 background: colors.surface,
                 padding: 20,
                 borderRadius: 10,
                 border: `1.5px solid ${colors.text_muted}10`,
               }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: colors.primary }}>{item.tag}</span>
-                <h4 style={{ fontSize: 15, fontWeight: 700, color: colors.text, marginTop: 8, margin: 0 }}>{item.title}</h4>
-                <p style={{ fontSize: 12, color: colors.text_muted, marginTop: 8, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+                <span style={{ fontSize: 11, fontWeight: 700, color: accent }}>{item.tag}</span>
+                <h4 style={{ fontSize: 15, fontWeight: 700, color: heading, marginTop: 8, margin: 0 }}>{item.title}</h4>
+                <p style={{ fontSize: 12, color: text, marginTop: 8, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
               </div>
             ))}
           </div>
@@ -1282,12 +1280,12 @@ export function PageConcept({ payload }: Props) {
 
     // Concept 0: standard vertical list rows (Default)
     return (
-      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
-        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: colors.text, margin: 0 }}>
+      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
+        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: heading, margin: 0 }}>
           What We Offer
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {listItems.slice(0, 3).map((srv, idx) => (
+          {copy.services.slice(0, 3).map((srv, idx) => (
             <div key={idx} style={{
               background: colors.surface,
               borderRadius: 10,
@@ -1299,16 +1297,16 @@ export function PageConcept({ payload }: Props) {
               gap: 20,
             }}>
               <div>
-                <h4 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: 0 }}>{srv.title}</h4>
-                <p style={{ fontSize: 12, color: colors.text_muted, marginTop: 6, lineHeight: 1.5, margin: 0 }}>{srv.desc}</p>
+                <h4 style={{ fontSize: 16, fontWeight: 600, color: heading, margin: 0 }}>{srv.title}</h4>
+                <p style={{ fontSize: 12, color: text, marginTop: 6, lineHeight: 1.5, margin: 0 }}>{srv.desc}</p>
               </div>
               <span style={{
-                background: `${colors.primary}12`,
-                border: `1px solid ${colors.primary}25`,
+                background: `${accent}12`,
+                border: `1px solid ${accent}25`,
                 borderRadius: 9999,
                 padding: "4px 12px",
                 fontSize: 10,
-                color: colors.primary,
+                color: accent,
                 fontWeight: 600,
                 whiteSpace: "nowrap",
               }}>
@@ -1321,22 +1319,21 @@ export function PageConcept({ payload }: Props) {
     );
   }
 
-  function RenderBlogGrid({ conceptIndex }: { conceptIndex: number }) {
-    const posts = [
-      { title: "Building landing pages converting in 2026", date: "July 7, 2026", read: "5 min read", emoji: "⚡" },
-      { title: "Secrets of custom variables in modern CSS", date: "June 28, 2026", read: "8 min read", emoji: "🎨" },
-      { title: "Typography choices dictating brand conversion rate", date: "May 14, 2026", read: "4 min read", emoji: "✍️" },
-    ];
+  function RenderBlogGrid({ conceptIndex, style }: { conceptIndex: number; style: SectionStyle }) {
+    const bg = style.bg_color || colors.background;
+    const text = style.text_color || colors.text_muted;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.accent;
 
     // Concept 2: Text-only minimal list of rows with custom date and link icon
     if (conceptIndex === 2) {
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
-          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, color: colors.text, margin: 0 }}>
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
+          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, color: heading, margin: 0 }}>
             Read Publications
           </h3>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {posts.map((post, idx) => (
+            {copy.blog.map((post, idx) => (
               <div key={idx} style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -1345,10 +1342,10 @@ export function PageConcept({ payload }: Props) {
                 borderBottom: `1px solid ${colors.text_muted}15`,
               }}>
                 <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, color: colors.text_muted, width: 80 }}>{post.date}</span>
-                  <h4 style={{ fontSize: 14, fontWeight: 600, color: colors.text, margin: 0 }}>{post.title}</h4>
+                  <span style={{ fontSize: 11, color: text, width: 80 }}>{post.date}</span>
+                  <h4 style={{ fontSize: 14, fontWeight: 600, color: heading, margin: 0 }}>{post.title}</h4>
                 </div>
-                <span style={{ fontSize: 12, color: colors.primary, fontWeight: 700, cursor: "pointer" }}>Read Article →</span>
+                <span style={{ fontSize: 12, color: accent, fontWeight: 700, cursor: "pointer" }}>Read Article →</span>
               </div>
             ))}
           </div>
@@ -1359,9 +1356,9 @@ export function PageConcept({ payload }: Props) {
     // Concept 1: Left featured large article, right simple rows
     if (conceptIndex === 1) {
       return (
-        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
-          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, color: colors.text, margin: 0 }}>
-            Branding Resources
+        <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
+          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, color: heading, margin: 0 }}>
+            Resources &amp; Press
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 30, marginTop: 12 }}>
             {/* Left featured column */}
@@ -1374,21 +1371,18 @@ export function PageConcept({ payload }: Props) {
               flexDirection: "column",
               gap: 12,
             }}>
-              <span style={{ fontSize: 10, color: colors.primary, fontWeight: 700 }}>FEATURED ARTICLE</span>
-              <h4 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>{posts[0].title}</h4>
-              <p style={{ fontSize: 13, color: colors.text_muted, lineHeight: 1.6, margin: 0 }}>
+              <span style={{ fontSize: 10, color: accent, fontWeight: 700 }}>FEATURED ARTICLE</span>
+              <h4 style={{ fontSize: 18, fontWeight: 700, color: heading, margin: 0 }}>{copy.blog[0].title}</h4>
+              <p style={{ fontSize: 13, color: text, lineHeight: 1.6, margin: 0 }}>
                 A deep dive analysis exploring design token layouts, responsive constraints, and typography metrics that optimize layout readability.
               </p>
-              <button style={{ background: colors.primary, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", width: "fit-content", fontSize: 12, fontWeight: 700, cursor: "pointer", marginTop: 8 }}>
-                Read Guide
-              </button>
             </div>
             {/* Right stack column */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {posts.slice(1, 3).map((post, i) => (
+              {copy.blog.slice(1, 3).map((post, i) => (
                 <div key={i} style={{ background: colors.surface, padding: 16, borderRadius: 10, border: `1px solid ${colors.text_muted}10` }}>
-                  <span style={{ fontSize: 9, color: colors.text_muted }}>{post.date}</span>
-                  <h5 style={{ fontSize: 13, fontWeight: 600, color: colors.text, marginTop: 4, margin: 0 }}>{post.title}</h5>
+                  <span style={{ fontSize: 9, color: text }}>{post.date}</span>
+                  <h5 style={{ fontSize: 13, fontWeight: 600, color: heading, marginTop: 4, margin: 0 }}>{post.title}</h5>
                 </div>
               ))}
             </div>
@@ -1399,12 +1393,12 @@ export function PageConcept({ payload }: Props) {
 
     // Concept 0: 3 columns article cards (Default)
     return (
-      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32 }}>
-        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: colors.text, margin: 0 }}>
+      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32, background: bg }}>
+        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: heading, margin: 0 }}>
           Latest Insights &amp; Articles
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-          {posts.map((post, idx) => (
+          {copy.blog.map((post, idx) => (
             <div key={idx} style={{
               background: colors.surface,
               border: `1px solid ${colors.text_muted}15`,
@@ -1413,18 +1407,15 @@ export function PageConcept({ payload }: Props) {
               display: "flex",
               flexDirection: "column",
             }}>
-              <div style={{ height: 140, background: `${colors.primary}10`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>
+              <div style={{ height: 140, background: `${accent}10`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>
                 {post.emoji}
               </div>
               <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: colors.text_muted }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: text }}>
                   <span>{post.date}</span>
                   <span>{post.read}</span>
                 </div>
-                <h4 style={{ fontSize: 14, fontWeight: 600, color: colors.text, lineHeight: 1.4, margin: 0 }}>{post.title}</h4>
-                <p style={{ fontSize: 12, color: colors.text_muted, lineHeight: 1.6, marginTop: 4, margin: 0 }}>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
-                </p>
+                <h4 style={{ fontSize: 14, fontWeight: 600, color: heading, lineHeight: 1.4, margin: 0 }}>{post.title}</h4>
               </div>
             </div>
           ))}
@@ -1433,16 +1424,20 @@ export function PageConcept({ payload }: Props) {
     );
   }
 
-  function RenderMapLocation() {
+  function RenderMapLocation({ style }: { style: SectionStyle }) {
+    const bg = style.bg_color || colors.background;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.accent;
+
     return (
-      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24 }}>
-        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, color: colors.text, margin: 0 }}>
+      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 24, background: bg }}>
+        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 26, color: heading, margin: 0 }}>
           Find Us Here
         </h3>
         <div style={{
           height: 240,
           borderRadius: 12,
-          background: `${colors.primary}10`,
+          background: `${accent}10`,
           border: `1px solid ${colors.text_muted}15`,
           display: "flex",
           alignItems: "center",
@@ -1465,27 +1460,33 @@ export function PageConcept({ payload }: Props) {
             gap: 8,
             zIndex: 10,
           }}>
-            📍 <span>HCMC Office, District 1</span>
+            📍 <span>Headquarters Office</span>
           </div>
         </div>
       </div>
     );
   }
 
-  function RenderContactForm() {
+  function RenderContactForm({ style }: { style: SectionStyle }) {
+    const bg = style.bg_color || colors.background;
+    const text = style.text_color || colors.text_muted;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.accent;
+    const btnBg = style.btn_primary_bg || colors.primary;
+    const btnText = style.btn_primary_text || "#ffffff";
+
     return (
-      <div style={{ padding: "50px 40px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 }}>
+      <div style={{ padding: "50px 40px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, background: bg }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: colors.text, margin: 0 }}>
+          <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, color: heading, margin: 0 }}>
             Get in touch
           </h3>
-          <p style={{ fontSize: 13, color: colors.text_muted, lineHeight: 1.6, margin: 0 }}>
-            Have questions about the generated concept? Send us a message and our team will get back to you shortly.
+          <p style={{ fontSize: 13, color: text, lineHeight: 1.6, margin: 0 }}>
+            Have questions about our custom sitemaps or branding tokens? Send us a message and our team will get back to you shortly.
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12, color: colors.text_muted, marginTop: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12, color: text, marginTop: 12 }}>
             <p style={{ margin: 0 }}>📍 HCMC, Vietnam</p>
             <p style={{ margin: 0 }}>✉️ hello@align.vn</p>
-            <p style={{ margin: 0 }}>📞 +84 (0) 123 456 789</p>
           </div>
         </div>
         <form onSubmit={(e) => e.preventDefault()} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1494,7 +1495,7 @@ export function PageConcept({ payload }: Props) {
             <input type="email" placeholder="Email Address" style={{ padding: 12, borderRadius: 6, border: `1px solid ${colors.text_muted}22`, background: colors.surface, color: colors.text, fontSize: 12 }} />
           </div>
           <textarea placeholder="Message Details..." rows={4} style={{ padding: 12, borderRadius: 6, border: `1px solid ${colors.text_muted}22`, background: colors.surface, color: colors.text, fontSize: 12, resize: "none" }} />
-          <button style={{ background: colors.primary, color: "#fff", border: "none", borderRadius: 6, padding: "10px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+          <button style={{ background: btnBg, color: btnText, border: "none", borderRadius: 6, padding: "10px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
             Send Message
           </button>
         </form>
@@ -1502,17 +1503,19 @@ export function PageConcept({ payload }: Props) {
     );
   }
 
-  function RenderTestimonials() {
+  function RenderTestimonials({ style }: { style: SectionStyle }) {
+    const bg = style.bg_color || colors.background;
+    const text = style.text_color || colors.text_muted;
+    const heading = style.heading_color || colors.text;
+    const accent = style.accent_color || colors.primary;
+
     return (
-      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32 }}>
-        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: colors.text, margin: 0 }}>
+      <div style={{ padding: "50px 40px", display: "flex", flexDirection: "column", gap: 32, background: bg }}>
+        <h3 style={{ fontFamily: `'${typography.heading.family}', sans-serif`, fontWeight: 700, fontSize: 28, textAlign: "center", color: heading, margin: 0 }}>
           What clients say
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-          {[
-            { quote: "Align generated a beautiful sitemap and palette that matched our vibe in seconds. Extremely helpful!", author: "Sarah Connor, CEO at Nova" },
-            { quote: "The option to regenerate based on design comments made iterating on the style guide incredibly smooth.", author: "Marcus Aurelius, Founder" },
-          ].map((t, i) => (
+          {copy.testimonials.slice(0, 2).map((t, i) => (
             <div key={i} style={{
               background: colors.surface,
               borderRadius: 12,
@@ -1522,9 +1525,9 @@ export function PageConcept({ payload }: Props) {
               flexDirection: "column",
               gap: 12,
             }}>
-              <div style={{ color: colors.primary, fontSize: 16 }}>★★★★★</div>
-              <p style={{ fontSize: 12, color: colors.text, lineHeight: 1.6, fontStyle: "italic", margin: 0 }}>&quot;{t.quote}&quot;</p>
-              <p style={{ fontSize: 11, color: colors.text_muted, fontWeight: 600, marginTop: 8, margin: 0 }}>{t.author}</p>
+              <div style={{ color: accent, fontSize: 16 }}>★★★★★</div>
+              <p style={{ fontSize: 12, color: heading, lineHeight: 1.6, fontStyle: "italic", margin: 0 }}>&quot;{t.quote}&quot;</p>
+              <p style={{ fontSize: 11, color: text, fontWeight: 600, marginTop: 8, margin: 0 }}>{t.author}</p>
             </div>
           ))}
         </div>
@@ -1642,7 +1645,7 @@ export function PageConcept({ payload }: Props) {
               {logo_url ? (
                 <img src={logo_url} alt="Logo" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "contain", background: "white" }} />
               ) : (
-                <div style={{ width: 28, height: 28, borderRadius: 6, background: colors.primary, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 6, background: colors.primary, display: "flex", alignItems: "center", justifyContent: "center", color: getContrastColor(colors.primary), fontWeight: 700, fontSize: 13 }}>
                   {business_name.charAt(0)}
                 </div>
               )}
@@ -1659,7 +1662,7 @@ export function PageConcept({ payload }: Props) {
             </div>
             <button style={{
               background: colors.primary,
-              color: "#fff",
+              color: getContrastColor(colors.primary),
               border: "none",
               borderRadius: 6,
               padding: "8px 16px",
@@ -1673,13 +1676,13 @@ export function PageConcept({ payload }: Props) {
 
           {/* Render layout sections dynamically based on AI-generated sitemap structure */}
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {pageSections.map((secName, idx) => {
+            {pageSections.map((sec, idx) => {
               // Calculate concept index based on activeTab name + index to rotate dynamically through 3 options
               const conceptIndex = (idx + activeTab.length) % 3;
-              const Renderer = resolveSectionRenderer(secName);
+              const Renderer = resolveSectionRenderer(sec.name);
               return (
                 <div key={idx} style={{ borderBottom: `1px solid ${colors.text_muted}10` }}>
-                  <Renderer conceptIndex={conceptIndex} />
+                  <Renderer conceptIndex={conceptIndex} style={sec} />
                 </div>
               );
             })}

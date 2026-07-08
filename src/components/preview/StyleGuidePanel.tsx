@@ -308,76 +308,92 @@ export function StyleGuidePanel({ payload }: Props) {
         {/* ── Buttons ─────────────────────────────────────────────────────*/}
         <Cell>
           <SectionLabel>Buttons</SectionLabel>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {(() => {
+            const btn_primary_bg = colors.btn_primary_bg || colors.primary;
+            const btn_primary_text = colors.btn_primary_text || getContrastColor(colors.primary);
+            const btn_hover_primary_bg = colors.btn_hover_primary_bg || colors.accent;
+            const btn_hover_primary_text = colors.btn_hover_primary_text || getContrastColor(colors.accent);
+            
+            const btn_secondary_border = colors.btn_secondary_border || (isDarkTheme ? "#ffffff" : colors.primary);
+            const btn_secondary_text = colors.btn_secondary_text || (isDarkTheme ? "#ffffff" : colors.primary);
+            const btn_hover_secondary_bg = colors.btn_hover_secondary_bg || (isDarkTheme ? "rgba(255,255,255,0.1)" : `${colors.primary}12`);
+            const btn_hover_secondary_text = colors.btn_hover_secondary_text || (isDarkTheme ? "#ffffff" : colors.primary);
+            
+            const btn_tertiary_text = colors.btn_tertiary_text || (isDarkTheme ? colors.accent : colors.primary);
 
-            {/* Primary */}
-            <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr", alignItems: "center", gap: 12 }}>
-              <p style={{ fontSize: 11, color: themeText, fontWeight: 500 }}>Primary</p>
-              <div>
-                <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Default</p>
-                <button style={{ background: colors.primary, color: getContrastColor(colors.primary), border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "default", fontFamily: `'${typography.body.family}', sans-serif` }}>
-                  Primary Button
-                </button>
-              </div>
-              <div>
-                <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Hover</p>
-                <button style={{ background: colors.accent, color: getContrastColor(colors.accent), border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "default", display: "flex", alignItems: "center", gap: 6, fontFamily: `'${typography.body.family}', sans-serif` }}>
-                  Primary Button <span>→</span>
-                </button>
-              </div>
-            </div>
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-            <div style={{ borderTop: themeBorder }} />
+                {/* Primary */}
+                <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr", alignItems: "center", gap: 12 }}>
+                  <p style={{ fontSize: 11, color: themeText, fontWeight: 500 }}>Primary</p>
+                  <div>
+                    <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Default</p>
+                    <button style={{ background: btn_primary_bg, color: btn_primary_text, border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "default", fontFamily: `'${typography.body.family}', sans-serif` }}>
+                      Primary Button
+                    </button>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Hover</p>
+                    <button style={{ background: btn_hover_primary_bg, color: btn_hover_primary_text, border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "default", display: "flex", alignItems: "center", gap: 6, fontFamily: `'${typography.body.family}', sans-serif` }}>
+                      Primary Button <span>→</span>
+                    </button>
+                  </div>
+                </div>
 
-            {/* Secondary */}
-            <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr", alignItems: "center", gap: 12 }}>
-              <p style={{ fontSize: 11, color: themeText, fontWeight: 500 }}>Secondary</p>
-              <div>
-                <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Default</p>
-                <button style={{ background: "transparent", color: colors.primary, border: `1.5px solid ${colors.primary}`, borderRadius: 8, padding: "9px 20px", fontSize: 13, fontWeight: 600, cursor: "default", fontFamily: `'${typography.body.family}', sans-serif` }}>
-                  Secondary
-                </button>
-              </div>
-              <div>
-                <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Hover</p>
-                <button style={{ background: `${colors.primary}12`, color: colors.primary, border: `1.5px solid ${colors.primary}`, borderRadius: 8, padding: "9px 20px", fontSize: 13, fontWeight: 600, cursor: "default", display: "flex", alignItems: "center", gap: 6, fontFamily: `'${typography.body.family}', sans-serif` }}>
-                  Secondary <span>→</span>
-                </button>
-              </div>
-            </div>
+                <div style={{ borderTop: themeBorder }} />
 
-            <div style={{ borderTop: themeBorder }} />
+                {/* Secondary */}
+                <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr", alignItems: "center", gap: 12 }}>
+                  <p style={{ fontSize: 11, color: themeText, fontWeight: 500 }}>Secondary</p>
+                  <div>
+                    <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Default</p>
+                    <button style={{ background: "transparent", color: btn_secondary_text, border: `1.5px solid ${btn_secondary_border}`, borderRadius: 8, padding: "9px 20px", fontSize: 13, fontWeight: 600, cursor: "default", fontFamily: `'${typography.body.family}', sans-serif` }}>
+                      Secondary
+                    </button>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Hover</p>
+                    <button style={{ background: btn_hover_secondary_bg, color: btn_hover_secondary_text, border: `1.5px solid ${btn_secondary_border}`, borderRadius: 8, padding: "9px 20px", fontSize: 13, fontWeight: 600, cursor: "default", display: "flex", alignItems: "center", gap: 6, fontFamily: `'${typography.body.family}', sans-serif` }}>
+                      Secondary <span>→</span>
+                    </button>
+                  </div>
+                </div>
 
-            {/* Tertiary */}
-            <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr", alignItems: "center", gap: 12 }}>
-              <p style={{ fontSize: 11, color: themeText, fontWeight: 500 }}>Tertiary</p>
-              <div>
-                <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Default</p>
-                <button style={{ background: "none", color: colors.primary, border: "none", padding: "9px 0", fontSize: 13, fontWeight: 600, cursor: "default", display: "flex", alignItems: "center", gap: 4, fontFamily: `'${typography.body.family}', sans-serif` }}>
-                  Link Button <span>→</span>
-                </button>
+                <div style={{ borderTop: themeBorder }} />
+
+                {/* Tertiary */}
+                <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr", alignItems: "center", gap: 12 }}>
+                  <p style={{ fontSize: 11, color: themeText, fontWeight: 500 }}>Tertiary</p>
+                  <div>
+                    <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Default</p>
+                    <button style={{ background: "none", color: btn_tertiary_text, border: "none", padding: "9px 0", fontSize: 13, fontWeight: 600, cursor: "default", display: "flex", alignItems: "center", gap: 4, fontFamily: `'${typography.body.family}', sans-serif` }}>
+                      Link Button <span>→</span>
+                    </button>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Hover</p>
+                    <button style={{
+                      background: "none",
+                      color: btn_tertiary_text,
+                      border: "none",
+                      borderBottom: `1.5px solid ${btn_tertiary_text}`,
+                      padding: "9px 0",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "default",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      fontFamily: `'${typography.body.family}', sans-serif`
+                    }}>
+                      Link Button <span>→</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p style={{ fontSize: 9, color: themeMutedText, marginBottom: 6 }}>Hover</p>
-                <button style={{
-                  background: "none",
-                  color: isLightColor(colors.accent) ? colors.secondary || colors.primary : colors.accent,
-                  border: "none",
-                  borderBottom: `1.5px solid ${isLightColor(colors.accent) ? colors.secondary || colors.primary : colors.accent}`,
-                  padding: "9px 0",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "default",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  fontFamily: `'${typography.body.family}', sans-serif`
-                }}>
-                  Link Button <span>→</span>
-                </button>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
         </Cell>
       </div>
 

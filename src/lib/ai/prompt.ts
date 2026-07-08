@@ -13,7 +13,7 @@ const WEBSITE_GOAL_MAP: Record<string, string> = {
   brand_story:      "tell the brand story and build credibility/presence",
   get_bookings:     "get bookings, appointments, and reservations",
   showcase_work:    "showcase work and past projects",
-  build_credibility:"build credibility and trust with the target audience",
+  build_credibility: "build credibility and trust with the target audience",
 };
 
 const TYPOGRAPHY_MAP: Record<string, string> = {
@@ -25,12 +25,14 @@ const TYPOGRAPHY_MAP: Record<string, string> = {
   ai_suggest:            "AI-suggested — choose the most contextually appropriate pairing based on the business and style",
 };
 
-// ─── STEP 1: Wireframing Prompts ──────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════════════════
+// AGENT 1: Wireframer Agent
+// ═════════════════════════════════════════════════════════════════════════════
 
 export function buildWireframeSystemPrompt(): string {
   return `You are a Senior Information Architect and UX Planner. Your job is to draft a sitemap and structural section flow for all pages of a website concept.
 
-You must return a single valid JSON object containing only a "sitemap" array. Do not include markdown formatting or explanations.
+You must return a single valid JSON object containing only a "sitemap" array where each page contains its "slug", "label", and a simple string list of "sections". Do not include markdown formatting or explanations.
 
 CRITICAL STRUCTURAL CONSTRAINTS:
 1. Diversity of Layout: You must ensure a high-fidelity layout. No two adjacent sections on any page should be of the same type.
@@ -70,7 +72,7 @@ ${quiz.comments.map((c, i) => `[Revision ${i + 1}]: ${c}`).join("\n")}
 - Target customer: ${quiz.target_customers || "General public"}
 - Suggested pages: ${quiz.sitemap.page_count} pages description: "${quiz.sitemap.pages_description}"
 ${commentsSection}
-Return ONLY this JSON structure:
+Return ONLY this JSON structure (no markdown wrapper, no other text):
 {
   "sitemap": [
     {
@@ -82,12 +84,14 @@ Return ONLY this JSON structure:
 }`;
 }
 
-// ─── STEP 2: Branding & Design Expansion Prompts ─────────────────────────────
+// ═════════════════════════════════════════════════════════════════════════════
+// AGENT 2: Stylist Agent
+// ═════════════════════════════════════════════════════════════════════════════
 
 export function buildExpansionSystemPrompt(): string {
-  return `You are an expert Brand Strategist and UI/UX Designer. Your task is to take a pre-defined website wireframe structure and generate the complete design system token concept (colors, typography, tagline, vibe summary, and icons).
+  return `You are an expert Brand Stylist. Your task is to take a website wireframe sitemap structure and generate the color palette (including explicit contrast-compliant button state defaults and hovers), typography settings, tagline, vibe summary, and corporate icon sets.
 
-You must return a single valid JSON object that strictly conforms to the requested schema. Do not add any text or code fences outside the JSON.`;
+You must return a single valid JSON object. Do not add any code fences or markdown wrappers.`;
 }
 
 export function buildExpansionUserPrompt(quiz: QuizPayload, wireframeJson: string): string {
@@ -99,9 +103,9 @@ export function buildExpansionUserPrompt(quiz: QuizPayload, wireframeJson: strin
   - Secondary: ${quiz.color_direction.colors.secondary}
   - Accent: ${quiz.color_direction.colors.accent}
   Derive the background, surface, text, and text_muted colors to complement these.`
-      : "Suggest a fresh, professional color palette that fits the business personality and style tags.";
+      : "Suggest a fresh, professional color palette (primary, secondary, accent, background, surface, text, text_muted) that fits the business personality and style tags.";
 
-  return `Complete the website design concept for "${quiz.business_name}" based on the following pre-determined sitemap wireframe structure:
+  return `Complete the brand styling system concept for "${quiz.business_name}" based on the following pre-determined sitemap wireframe structure:
 
 ${wireframeJson}
 
@@ -111,8 +115,8 @@ ${wireframeJson}
 - **Typography Style Preference**: ${typographyStyle}
 - **Color Direction**: ${colorInstruction}
 
-## Required JSON Output
-Return ONLY this JSON structure (no markdown, no text outside the JSON):
+## Required Output Format
+Return ONLY a valid JSON object matching the following structure (no markdown wrappers, no text outside JSON):
 {
   "business_name": "${quiz.business_name}",
   "colors": {
@@ -122,7 +126,16 @@ Return ONLY this JSON structure (no markdown, no text outside the JSON):
     "background": "#hex",
     "surface": "#hex",
     "text": "#hex",
-    "text_muted": "#hex"
+    "text_muted": "#hex",
+    "btn_primary_bg": "#hex",
+    "btn_primary_text": "#hex",
+    "btn_hover_primary_bg": "#hex",
+    "btn_hover_primary_text": "#hex",
+    "btn_secondary_border": "#hex",
+    "btn_secondary_text": "#hex",
+    "btn_hover_secondary_bg": "#hex",
+    "btn_hover_secondary_text": "#hex",
+    "btn_tertiary_text": "#hex"
   },
   "typography": {
     "heading": {
@@ -141,16 +154,113 @@ Return ONLY this JSON structure (no markdown, no text outside the JSON):
     { "label": "Services", "symbol": "⚡" },
     { "label": "Contact", "symbol": "✉️" },
     { "label": "Blog", "symbol": "📝" },
-    { "label": "Portfolio", "symbol": "🖼️" },
     { "label": "Pricing", "symbol": "💰" },
     { "label": "Team", "symbol": "👥" },
     { "label": "FAQ", "symbol": "❓" },
     { "label": "Booking", "symbol": "📅" }
   ],
-  "sitemap": <Insert the exact "sitemap" array from the wireframe input above>,
-  "tagline": "A punchy one-liner for ${quiz.business_name}",
-  "vibe_summary": "2-3 sentences describing the design direction and why these choices fit the brand."
+  "tagline": "A punchy brand one-liner",
+  "vibe_summary": "Description of why these colors/fonts represent the brand."
+}`;
 }
 
-IMPORTANT: The icon_set must contain 6-12 items. Each item must have a "label" (short, 1-2 words) and a "symbol" (a single relevant Unicode emoji). Choose icons relevant to the specific business.`;
+// ═════════════════════════════════════════════════════════════════════════════
+// AGENT 3: Section Styler & Demo Copy Agent
+// ═════════════════════════════════════════════════════════════════════════════
+
+export function buildSectionStylerSystemPrompt(): string {
+  return `You are a Senior UI Engineer and Website Copywriter. Your task is to review the sitemap structure and styling tokens, then output:
+1. "sitemap": An updated sitemap array where each section in a page has an explicit, contrast-safe color scheme (bg_color, text_color, heading_color, accent_color, and button colors) selected contextually.
+2. "demo_content": Highly customized real marketing copy, headlines, features, pricing items, FAQs, and testimonials specific to this business (no lorem-ipsum!).
+
+CRITICAL STYLING CONTRAST RULES:
+1. Readability: For every section, the text_color and heading_color MUST have high contrast against the bg_color. Never use dark text on dark backgrounds, or white text on white backgrounds.
+2. Dark Sections: If a section has a dark bg_color (like primary/dark colors), then heading_color and text_color MUST be light (like white #ffffff or light gray).
+3. Buttons: btn_primary_text must have high contrast against btn_primary_bg. btn_secondary_text must contrast against bg_color.
+4. Coherence: Colors generated per section must match the stylistic tokens provided in the prompt.`;
+}
+
+export function buildSectionStylerUserPrompt(quiz: QuizPayload, wireframeJson: string, styleJson: string): string {
+  return `Write the dynamic copy and generate contrast-safe section color schemes for "${quiz.business_name}".
+
+## Wireframe Structure
+${wireframeJson}
+
+## Brand Style Settings
+${styleJson}
+
+## Required JSON Output
+Return ONLY this JSON object structure (no markdown wrappers, no text outside JSON):
+{
+  "sitemap": [
+    {
+      "slug": "home",
+      "label": "Home",
+      "sections": [
+        {
+          "name": "Hero",
+          "bg_color": "#hex",
+          "text_color": "#hex",
+          "heading_color": "#hex",
+          "accent_color": "#hex",
+          "btn_primary_bg": "#hex",
+          "btn_primary_text": "#hex",
+          "btn_secondary_border": "#hex",
+          "btn_secondary_text": "#hex"
+        }
+      ]
+    }
+  ],
+  "demo_content": {
+    "hero": {
+      "title": "A headline tailored to the business niche",
+      "subtitle": "A subheadline description explaining value prop",
+      "cta_primary": "Get Started",
+      "cta_secondary": "Explore more"
+    },
+    "features": [
+      { "title": "Feature 1 Title", "desc": "Feature description text", "num": "01" },
+      { "title": "Feature 2 Title", "desc": "Feature description text", "num": "02" },
+      { "title": "Feature 3 Title", "desc": "Feature description text", "num": "03" }
+    ],
+    "stats": [
+      { "value": "e.g. 500+", "label": "e.g. Happy Clients" },
+      { "value": "e.g. 10+", "label": "e.g. Years Experience" },
+      { "value": "e.g. 99%", "label": "e.g. Success Rate" }
+    ],
+    "cta": {
+      "title": "A compelling call-to-action title",
+      "subtitle": "A short sub-line of text urging conversion",
+      "button_text": "Join Now"
+    },
+    "pricing": [
+      { "name": "Basic", "price": "$19", "desc": "Best for starters", "items": ["Item A", "Item B"] },
+      { "name": "Pro", "price": "$49", "desc": "Best value", "items": ["Item A", "Item B", "Item C"] }
+    ],
+    "faq": [
+      { "q": "Common Question 1?", "a": "Bespoke answer matching this company" },
+      { "q": "Common Question 2?", "a": "Bespoke answer matching this company" }
+    ],
+    "team": [
+      { "name": "First Last", "role": "Title", "bio": "Brief role bio description", "emoji": "👤" },
+      { "name": "First Last", "role": "Title", "bio": "Brief role bio description", "emoji": "👩‍💻" }
+    ],
+    "services": [
+      { "title": "Service 1", "desc": "Detailed service description", "tag": "Popular", "emoji": "🎨" },
+      { "title": "Service 2", "desc": "Detailed service description", "tag": "Featured", "emoji": "⚡" }
+    ],
+    "products": [
+      { "name": "Product 1", "price": "$49.00", "cat": "Category", "rating": "5★", "emoji": "📦" },
+      { "name": "Product 2", "price": "$99.00", "cat": "Category", "rating": "4★", "emoji": "🛠️" }
+    ],
+    "testimonials": [
+      { "quote": "Client feedback quote specific to this domain.", "author": "Author Name, Job" },
+      { "quote": "Client feedback quote specific to this domain.", "author": "Author Name, Job" }
+    ],
+    "blog": [
+      { "title": "Useful industry article headline", "date": "July 8, 2026", "read": "5 min read", "emoji": "⚡" },
+      { "title": "Another article headline", "date": "June 30, 2026", "read": "7 min read", "emoji": "💡" }
+    ]
+  }
+}`;
 }

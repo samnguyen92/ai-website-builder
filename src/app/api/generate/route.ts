@@ -6,6 +6,8 @@ import {
   buildWireframeUserPrompt,
   buildExpansionSystemPrompt,
   buildExpansionUserPrompt,
+  buildSectionStylerSystemPrompt,
+  buildSectionStylerUserPrompt,
 } from "@/lib/ai/prompt";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -186,9 +188,9 @@ export async function POST(req: NextRequest) {
             process.env.OPENROUTER_TEXT_MODEL ?? "deepseek/deepseek-chat-v3-0324:free";
 
           // ==========================================
-          // STEP 1: Wireframing (Sitemap & Layouts flow)
+          // AGENT 1: Wireframing (Sitemap & Layouts flow)
           // ==========================================
-          console.log(`[generate] starting Step 1: Wireframe layout logic`);
+          console.log(`[generate] starting Agent 1: Wireframe layout planner`);
           const wireframeCompletion = await openrouter.chat.completions.create({
             model: rawModel.replace(/[^\x00-\x7F]/g, "-"),
             response_format: { type: "json_object" },
@@ -200,12 +202,12 @@ export async function POST(req: NextRequest) {
           });
 
           const wireframeRaw = wireframeCompletion.choices[0]?.message?.content ?? '{"sitemap":[]}';
-          console.log(`[generate] Step 1 wireframe layout generated:`, wireframeRaw);
+          console.log(`[generate] Agent 1 wireframe layout generated:`, wireframeRaw);
 
           // ==========================================
-          // STEP 2: Branding & Design expansion
+          // AGENT 2: Styling & Brand Identity Design
           // ==========================================
-          console.log(`[generate] starting Step 2: Branding expansion`);
+          console.log(`[generate] starting Agent 2: Branding strategist`);
           const expansionCompletion = await openrouter.chat.completions.create({
             model: rawModel.replace(/[^\x00-\x7F]/g, "-"),
             response_format: { type: "json_object" },
@@ -216,12 +218,44 @@ export async function POST(req: NextRequest) {
             ],
           });
 
-          const raw = expansionCompletion.choices[0]?.message?.content ?? "{}";
-          const parsed = JSON.parse(raw);
+          const styleRaw = expansionCompletion.choices[0]?.message?.content ?? "{}";
+          const styleParsed = JSON.parse(styleRaw);
+          console.log(`[generate] Agent 2 branding system generated`);
+
+          // ==========================================
+          // AGENT 3: Section Styler & Copywriter (Dynamic Copy + Section Colors)
+          // ==========================================
+          console.log(`[generate] starting Agent 3: Section designer & copywriter`);
+          const sectionStylerCompletion = await openrouter.chat.completions.create({
+            model: rawModel.replace(/[^\x00-\x7F]/g, "-"),
+            response_format: { type: "json_object" },
+            temperature: 0.6,
+            messages: [
+              { role: "system", content: buildSectionStylerSystemPrompt() },
+              { role: "user",   content: buildSectionStylerUserPrompt(quiz, wireframeRaw, styleRaw) },
+            ],
+          });
+
+          const stylerRaw = sectionStylerCompletion.choices[0]?.message?.content ?? "{}";
+          const stylerParsed = JSON.parse(stylerRaw);
+          console.log(`[generate] Agent 3 copywriter & section styler complete`);
+
+          // Merge all results into final parsed payload
+          const finalParsed = {
+            business_name: styleParsed.business_name || quiz.business_name,
+            colors: styleParsed.colors,
+            typography: styleParsed.typography,
+            icon_set: styleParsed.icon_set,
+            tagline: styleParsed.tagline || "",
+            vibe_summary: styleParsed.vibe_summary || "",
+            sitemap: stylerParsed.sitemap || [],
+            demo_content: stylerParsed.demo_content || {},
+          };
 
           // Validate against expanded Zod schema
-          const validated = AIOutputSchema.safeParse(parsed);
+          const validated = AIOutputSchema.safeParse(finalParsed);
           if (!validated.success) {
+            console.error("Zod schema validation failed. Raw inputs:", finalParsed);
             throw new Error(
               `LLM schema mismatch: ${JSON.stringify(validated.error.flatten())}`
             );
