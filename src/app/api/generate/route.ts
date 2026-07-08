@@ -115,10 +115,10 @@ async function callOpenRouterImageAPI(prompt: string, models: string[]): Promise
 }
 
 async function generateLogo(businessName: string): Promise<string | null> {
-  const primaryModel = process.env.OPENROUTER_IMAGE_MODEL ?? "google/gemini-3.1-flash-lite-image";
+  const primaryModel = process.env.OPENROUTER_IMAGE_MODEL ?? "google/gemini-2.5-flash-image";
   const models = [
     primaryModel,
-    "google/gemini-3.1-flash-lite-image",
+    "google/gemini-2.5-flash-image",
     "recraft/recraft-v3",
     "black-forest-labs/flux.2-flex",
   ];
@@ -129,10 +129,10 @@ async function generateLogo(businessName: string): Promise<string | null> {
 }
 
 async function generateImage(prompt: string): Promise<string | null> {
-  const primaryModel = process.env.OPENROUTER_IMAGE_MODEL ?? "google/gemini-3.1-flash-lite-image";
+  const primaryModel = process.env.OPENROUTER_IMAGE_MODEL ?? "google/gemini-2.5-flash-image";
   const models = [
     primaryModel,
-    "google/gemini-3.1-flash-lite-image",
+    "google/gemini-2.5-flash-image",
     "recraft/recraft-v3",
     "black-forest-labs/flux.2-flex",
   ];
