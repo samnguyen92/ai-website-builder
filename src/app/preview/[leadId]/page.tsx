@@ -7,78 +7,23 @@ import { SitemapTree } from "@/components/preview/SitemapTree";
 import { PageConcept } from "@/components/preview/PageConcept";
 
 /* ─── Loading animation ───────────────── */
-function LoadingState() {
+function LoadingState({ currentStep }: { currentStep: number }) {
+  const steps = [
+    { text: "Planning website sitemap structure", id: 1 },
+    { text: "Generating color palettes & typography", id: 2 },
+    { text: "Writing copywriting content", id: 3 },
+    { text: "Custom-coding section components", id: 4 },
+    { text: "Creating logo & brand graphics", id: 5 },
+  ];
+
   return (
-    <div style={{
-      width: "100%",
-      minHeight: "100vh",
-      position: "relative",
-      background: "#121212",
-      overflow: "hidden",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "flex-start",
-      padding: "0 24px 60px 24px",
-      fontFamily: "var(--font-aeonik), sans-serif",
-    }}>
-      {/* ── Figma Background Blur shape ── */}
-      <div style={{
-        width: "661px",
-        height: "661px",
-        position: "absolute",
-        left: "50%",
-        top: "70%",
-        transform: "translate(-50%, -50%)",
-        background: "rgba(255, 255, 255, 0.08)",
-        boxShadow: "0 0 120px 60px rgba(255, 255, 255, 0.08)",
-        filter: "blur(150px)",
-        borderRadius: "50%",
-        pointerEvents: "none",
-        zIndex: 1,
-      }} />
-
-      {/* ── Top Header ── */}
-      <div style={{
-        width: "100%",
-        maxWidth: 1360,
-        height: 79,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
-        zIndex: 10,
-      }}>
-        {/* Figma Logo Marks */}
-        <div style={{ width: 59, height: 41, position: "relative", overflow: "hidden" }}>
-          <div style={{ width: "7.59px", height: "27.09px", left: "17.60px", top: "0.38px", position: "absolute", background: "#EDEDED" }} />
-          <div style={{ width: "4.99px", height: "14.66px", left: "8.73px", top: "12.84px", position: "absolute", background: "#EDEDED" }} />
-          <div style={{ width: "4.98px", height: "14.64px", left: "26.51px", top: "12.90px", position: "absolute", background: "#EDEDED" }} />
-          <div style={{ width: "5.02px", height: "14.72px", left: "-0.15px", top: "12.76px", position: "absolute", background: "#EDEDED" }} />
-          <div style={{ width: "7.59px", height: "27.09px", left: "32.80px", top: "12.95px", position: "absolute", background: "#EDEDED" }} />
-          <div style={{ width: "5.01px", height: "14.63px", left: "44.17px", top: "13.03px", position: "absolute", background: "#EDEDED" }} />
-          <div style={{ width: "5.04px", height: "5.30px", left: "26.50px", top: "32.59px", position: "absolute", background: "#EDEDED" }} />
-          <div style={{ width: "5.03px", height: "5.27px", left: "26.50px", top: "2.34px", position: "absolute", background: "#EDEDED" }} />
-          <div style={{ width: "5.54px", height: "14.55px", left: "52.77px", top: "13.11px", position: "absolute", background: "#EDEDED" }} />
-        </div>
-      </div>
-
-      {/* ── Main Content Column ── */}
-      <div style={{
-        width: "100%",
-        maxWidth: 1176,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        textAlign: "center",
-        marginTop: 60,
-        gap: 40,
-        zIndex: 10,
-      }}>
-        {/* Figma glowing orange circle logo */}
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0d0d0d", fontFamily: "var(--font-aeonik)" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 32, padding: 32, textAlign: "center" }}>
+        
+        {/* Glow pulsing circle */}
         <div style={{
-          width: 180,
-          height: 180,
+          width: 140,
+          height: 140,
           position: "relative",
           background: "#BD410C",
           boxShadow: "0px 5px 120px rgba(189, 65, 12, 0.5)",
@@ -89,18 +34,16 @@ function LoadingState() {
           justifyContent: "center",
           animation: "pulseGlow 2s ease-in-out infinite alternate",
         }}>
-          {/* Logo star visual shapes inside */}
-          <div style={{ width: 110, height: 92, position: "relative" }}>
-            <div style={{ width: 75, height: 75, left: 18, top: 12, position: "absolute", background: "#ffffff", borderRadius: 4, transform: "rotate(45deg)", boxShadow: "0px 4px 6px rgba(0,0,0,0.2) inset" }} />
-            <div style={{ width: 40, height: 40, left: 70, top: -2, position: "absolute", background: "#ffffff", borderRadius: 3, transform: "rotate(45deg)", boxShadow: "0px 4px 6px rgba(0,0,0,0.2) inset" }} />
-            <div style={{ width: 36, height: 36, left: -2, top: -2, position: "absolute", background: "#ffffff", borderRadius: 3, transform: "rotate(45deg)", boxShadow: "0px 4px 6px rgba(0,0,0,0.2) inset" }} />
-            <div style={{ width: 20, height: 20, left: 18, top: 72, position: "absolute", background: "#ffffff", borderRadius: 2, transform: "rotate(45deg)", boxShadow: "0px 4px 6px rgba(0,0,0,0.2) inset" }} />
+          <div style={{ width: 80, height: 67, position: "relative" }}>
+            <div style={{ width: 55, height: 55, left: 13, top: 9, position: "absolute", background: "#ffffff", borderRadius: 4, transform: "rotate(45deg)", boxShadow: "0px 4px 6px rgba(0,0,0,0.2) inset" }} />
+            <div style={{ width: 30, height: 30, left: 51, top: -1, position: "absolute", background: "#ffffff", borderRadius: 3, transform: "rotate(45deg)", boxShadow: "0px 4px 6px rgba(0,0,0,0.2) inset" }} />
+            <div style={{ width: 26, height: 26, left: -1, top: -1, position: "absolute", background: "#ffffff", borderRadius: 3, transform: "rotate(45deg)", boxShadow: "0px 4px 6px rgba(0,0,0,0.2) inset" }} />
           </div>
         </div>
 
         {/* Heading */}
         <h1 style={{
-          fontSize: "clamp(32px, 6vw, 64px)",
+          fontSize: "clamp(28px, 5vw, 48px)",
           fontWeight: 400,
           color: "#ffffff",
           lineHeight: 1.15,
@@ -109,61 +52,69 @@ function LoadingState() {
           Building your concept...
         </h1>
 
-        {/* Sub-headline */}
-        <p style={{
-          fontSize: "clamp(14px, 1.8vw, 18px)",
-          color: "rgba(255,255,255,0.70)",
-          maxWidth: 720,
-          lineHeight: 1.5,
-          margin: 0,
-        }}>
-          Turning your answers into a real, clickable website. This usually takes less than a minute.
-        </p>
-
         {/* Dynamic sequential step checklist */}
         <div style={{
           width: "100%",
-          maxWidth: 360,
+          maxWidth: 380,
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
           gap: 16,
-          marginTop: 20,
           textAlign: "left",
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.06)",
+          padding: 24,
+          borderRadius: 16,
         }}>
-          {[
-            "Understanding your business",
-            "Reviewing your goals",
-            "Organizing your sitemap",
-            "Creating your stylescape",
-            "Drafting page concepts",
-            "Preparing your preview"
-          ].map((stepText, idx) => {
-            const stepNum = idx + 1;
+          {steps.map((step, idx) => {
+            const isCompleted = idx < currentStep;
+            const isCurrent = idx === currentStep;
+
+            let badgeBg = "rgba(255,255,255,0.06)";
+            let badgeColor = "rgba(255,255,255,0.3)";
+            let textColor = "rgba(255,255,255,0.4)";
+            let symbol: React.ReactNode = idx + 1;
+
+            if (isCompleted) {
+              badgeBg = "rgba(40,200,64,0.15)";
+              badgeColor = "#28c840";
+              textColor = "rgba(255,255,255,0.85)";
+              symbol = "✓";
+            } else if (isCurrent) {
+              badgeBg = "#BD410C";
+              badgeColor = "#ffffff";
+              textColor = "#ffffff";
+              symbol = "⚡";
+            }
+
             return (
               <div
-                key={idx}
+                key={step.id}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 14,
-                  animation: `fadeInStep 0.6s ease ${idx * 0.4}s both`,
+                  opacity: isCompleted || isCurrent ? 1 : 0.4,
+                  transition: "all 0.3s ease",
                 }}
               >
                 <div style={{
                   width: 24,
                   height: 24,
                   borderRadius: "50%",
-                  background: "#BD410C",
+                  background: badgeBg,
+                  color: badgeColor,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   flexShrink: 0,
+                  fontSize: 11,
+                  fontWeight: 700,
                 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>{stepNum}</span>
+                  {symbol}
                 </div>
-                <span style={{ fontSize: 15, fontWeight: 400, color: "#ffffff" }}>
-                  {stepText}
+                <span style={{ fontSize: 14, fontWeight: 500, color: textColor }}>
+                  {step.text}
                 </span>
               </div>
             );
@@ -175,10 +126,6 @@ function LoadingState() {
         @keyframes pulseGlow {
           from { transform: scale(0.98); box-shadow: 0px 5px 60px rgba(189, 65, 12, 0.4); }
           to { transform: scale(1.02); box-shadow: 0px 5px 140px rgba(189, 65, 12, 0.7); }
-        }
-        @keyframes fadeInStep {
-          from { opacity: 0; transform: translateY(6px); }
-          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
@@ -205,35 +152,76 @@ function ErrorState({ message }: { message: string | null }) {
 export default function PreviewPage({ params }: { params: Promise<{ leadId: string }> }) {
   const { leadId } = use(params);
   const { status, payload, errorMessage, regenerateCount } = useGenerationStatus(leadId);
+  const [currentStep, setCurrentStep] = useState<number>(0);
 
-  // Trigger the actual generation process on loading page mount if state is pending
+  // Trigger the step-by-step generation process on loading page mount if state is pending
   useEffect(() => {
     if (status === "pending") {
       let isAborted = false;
       const startGeneration = async () => {
         try {
-          console.log("[PreviewPage] Initiating dynamic background generation stream for lead:", leadId);
-          const res = await fetch("/api/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ leadId }),
-          });
-          if (!res.ok) {
-            console.error("[PreviewPage] API generation endpoint returned non-ok status:", res.status);
-          } else {
-            const reader = res.body?.getReader();
-            if (reader) {
-              const decoder = new TextDecoder();
-              while (!isAborted) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                // Read from stream to keep connection alive
-                decoder.decode(value);
-              }
-            }
+          console.log("[PreviewPage] Starting step-by-step generation pipeline for lead:", leadId);
+          
+          // Step 1: Wireframe Planner
+          if (!isAborted) {
+            setCurrentStep(0);
+            const res1 = await fetch("/api/generate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ leadId, step: 1 }),
+            });
+            if (!res1.ok) throw new Error("Step 1 (Wireframe) failed");
           }
-        } catch (err) {
-          console.error("[PreviewPage] Generation failed on request mount:", err);
+
+          // Step 2: Branding Stylist
+          if (!isAborted) {
+            setCurrentStep(1);
+            const res2 = await fetch("/api/generate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ leadId, step: 2 }),
+            });
+            if (!res2.ok) throw new Error("Step 2 (Branding Style) failed");
+          }
+
+          // Step 3: Content Copywriter
+          if (!isAborted) {
+            setCurrentStep(2);
+            const res3 = await fetch("/api/generate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ leadId, step: 3 }),
+            });
+            if (!res3.ok) throw new Error("Step 3 (Copywriting Content) failed");
+          }
+
+          // Step 4: Section Coder
+          if (!isAborted) {
+            setCurrentStep(3);
+            const res4 = await fetch("/api/generate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ leadId, step: 4 }),
+            });
+            if (!res4.ok) throw new Error("Step 4 (Section Coder) failed");
+          }
+
+          // Step 5: Logo & Hero Assets (Finalizes Lead Status to complete)
+          if (!isAborted) {
+            setCurrentStep(4);
+            const res5 = await fetch("/api/generate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ leadId, step: 5 }),
+            });
+            if (!res5.ok) throw new Error("Step 5 (Visual Assets Creation) failed");
+            
+            // Mark step as completed so all checkmarks show up
+            setCurrentStep(5);
+          }
+        } catch (err: any) {
+          console.error("[PreviewPage] Step-by-step generation error:", err);
+          // Wait briefly, then let the page status handle error triggers
         }
       };
 
@@ -278,7 +266,7 @@ export default function PreviewPage({ params }: { params: Promise<{ leadId: stri
     }
   };
 
-  if (status === "pending" || status === "idle") return <LoadingState />;
+  if (status === "pending" || status === "idle") return <LoadingState currentStep={currentStep} />;
   if (status === "error") return <ErrorState message={errorMessage} />;
   if (!payload) return <ErrorState message="No payload received." />;
 

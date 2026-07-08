@@ -151,6 +151,216 @@ export async function POST(req: NextRequest) {
     let leadId: string;
     let quiz: QuizPayload;
 
+    // ─── Step-based Incremental Multi-Agent Generation ───────────────────────
+    if (body.step) {
+      const step = parseInt(body.step);
+      const targetLeadId = body.leadId;
+      if (!targetLeadId) {
+        return NextResponse.json({ error: "Missing leadId for step generation" }, { status: 400 });
+      }
+
+      const { data: lead, error: fetchError } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("id", targetLeadId)
+        .single();
+
+      if (fetchError || !lead) {
+        return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+      }
+
+      const quizPayload = lead.quiz_payload as QuizPayload;
+      const aiData = (lead.ai_payload || {}) as any;
+
+      try {
+        if (step === 1) {
+          console.log(`[generate] Step 1 starting for lead ${targetLeadId}: Wireframe Planner`);
+          const wireframeRaw = await generateLLMText({
+            temperature: 0.2,
+            responseFormat: { type: "json_object" },
+            messages: [
+              { role: "system", content: buildWireframeSystemPrompt() },
+              { role: "user",   content: buildWireframeUserPrompt(quizPayload) },
+            ],
+          });
+          const wireframeParsed = JSON.parse(wireframeRaw);
+          
+          aiData.sitemap = wireframeParsed.sitemap;
+          aiData.wireframe_raw = wireframeRaw;
+
+          await supabase
+            .from("leads")
+            .update({ ai_payload: aiData })
+            .eq("id", targetLeadId);
+
+          return NextResponse.json({ success: true, sitemap: wireframeParsed.sitemap });
+        }
+
+        else if (step === 2) {
+          console.log(`[generate] Step 2 starting for lead ${targetLeadId}: Branding Stylist`);
+          const wireframeRaw = aiData.wireframe_raw;
+          if (!wireframeRaw) {
+            return NextResponse.json({ error: "Missing step 1 wireframe layout data" }, { status: 400 });
+          }
+
+          const styleRaw = await generateLLMText({
+            temperature: 0.7,
+            responseFormat: { type: "json_object" },
+            messages: [
+              { role: "system", content: buildExpansionSystemPrompt() },
+              { role: "user",   content: buildExpansionUserPrompt(quizPayload, wireframeRaw) },
+            ],
+          });
+          const styleParsed = JSON.parse(styleRaw);
+
+          aiData.business_name = styleParsed.business_name || quizPayload.business_name;
+          aiData.colors = styleParsed.colors;
+          aiData.typography = styleParsed.typography;
+          aiData.icon_style = styleParsed.icon_style || "duotone-colored";
+          aiData.icon_set = styleParsed.icon_set;
+          aiData.tagline = styleParsed.tagline || "";
+          aiData.vibe_summary = styleParsed.vibe_summary || "";
+          aiData.style_raw = styleRaw;
+
+          await supabase
+            .from("leads")
+            .update({ ai_payload: aiData })
+            .eq("id", targetLeadId);
+
+          return NextResponse.json({ success: true, colors: aiData.colors, typography: aiData.typography });
+        }
+
+        else if (step === 3) {
+          console.log(`[generate] Step 3 starting for lead ${targetLeadId}: Content Copywriter`);
+          const wireframeRaw = aiData.wireframe_raw;
+          const styleRaw = aiData.style_raw;
+          if (!wireframeRaw || !styleRaw) {
+            return NextResponse.json({ error: "Missing step 1 or step 2 data" }, { status: 400 });
+          }
+
+          const stylerRaw = await generateLLMText({
+            temperature: 0.6,
+            responseFormat: { type: "json_object" },
+            messages: [
+              { role: "system", content: buildSectionStylerSystemPrompt() },
+              { role: "user",   content: buildSectionStylerUserPrompt(quizPayload, wireframeRaw, styleRaw) },
+            ],
+          });
+          const stylerParsed = JSON.parse(stylerRaw);
+
+          aiData.sitemap = stylerParsed.sitemap || aiData.sitemap;
+          aiData.demo_content = stylerParsed.demo_content || {};
+          aiData.styler_raw = stylerRaw;
+
+          await supabase
+            .from("leads")
+            .update({ ai_payload: aiData })
+            .eq("id", targetLeadId);
+
+          return NextResponse.json({ success: true, demo_content: aiData.demo_content });
+        }
+
+        else if (step === 4) {
+          console.log(`[generate] Step 4 starting for lead ${targetLeadId}: Section Coder`);
+          const stylerRaw = aiData.styler_raw;
+          const styleRaw = aiData.style_raw;
+          if (!stylerRaw || !styleRaw) {
+            return NextResponse.json({ error: "Missing content styler or style data" }, { status: 400 });
+          }
+
+          const coderRaw = await generateLLMText({
+            temperature: 0.5,
+            responseFormat: { type: "json_object" },
+            messages: [
+              { role: "system", content: buildSectionCoderSystemPrompt() },
+              { role: "user",   content: buildSectionCoderUserPrompt(quizPayload, stylerRaw, styleRaw, JSON.stringify(aiData.demo_content || {})) },
+            ],
+          });
+          const coderParsed = JSON.parse(coderRaw);
+
+          aiData.custom_code = coderParsed.custom_code || {};
+
+          await supabase
+            .from("leads")
+            .update({ ai_payload: aiData })
+            .eq("id", targetLeadId);
+
+          return NextResponse.json({ success: true });
+        }
+
+        else if (step === 5) {
+          console.log(`[generate] Step 5 starting for lead ${targetLeadId}: Logo & Hero Assets`);
+          
+          // Generate moodboard images instantly using Unsplash curated niches based on style tags
+          const tags = (quizPayload.style_tags || []).map(t => t.toLowerCase());
+          let moodImages = [
+            "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80",
+            "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80",
+            "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80"
+          ];
+          if (tags.includes("premium") || tags.includes("elegant") || tags.includes("trustworthy") || tags.includes("secure")) {
+            moodImages = [
+              "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80"
+            ];
+          } else if (tags.includes("creative") || tags.includes("bold") || tags.includes("playful")) {
+            moodImages = [
+              "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=80"
+            ];
+          } else if (tags.includes("warm") || tags.includes("handcrafted")) {
+            moodImages = [
+              "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=600&q=80",
+              "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=600&q=80"
+            ];
+          }
+          aiData.moodboard_images = moodImages;
+
+          const [logoRes, heroRes] = await Promise.allSettled([
+            generateLogo(aiData.business_name || quizPayload.business_name),
+            generateImage(`A clean high-quality modern website hero section graphic for a brand named "${aiData.business_name || quizPayload.business_name}". Minimal flat design UI, premium business branding mockup background, no text.`),
+          ]);
+
+          if (logoRes.status === "fulfilled" && logoRes.value) {
+            aiData.logo_url = logoRes.value;
+          }
+          if (heroRes.status === "fulfilled" && heroRes.value) {
+            aiData.hero_image_url = heroRes.value;
+          }
+
+          // Validate payload structure
+          const validated = AIOutputSchema.safeParse(aiData);
+          if (!validated.success) {
+            console.error("Step 5 payload Zod schema mismatch:", validated.error.flatten());
+            throw new Error(`LLM output schema mismatch inside step 5: ${JSON.stringify(validated.error.flatten())}`);
+          }
+
+          // Finalize lead record
+          await supabase
+            .from("leads")
+            .update({ status: "complete", ai_payload: validated.data })
+            .eq("id", targetLeadId);
+
+          console.log(`[generate] Lead ${targetLeadId} successfully finalized via step sequence`);
+          return NextResponse.json({ success: true, aiData: validated.data });
+        }
+
+        return NextResponse.json({ error: "Invalid step index number" }, { status: 400 });
+
+      } catch (err: any) {
+        const message = err instanceof Error ? err.message : "Step processing error";
+        console.error(`[generate] Error during Step ${step} execution for lead ${targetLeadId}:`, message);
+        await supabase
+          .from("leads")
+          .update({ status: "error", error_message: message })
+          .eq("id", targetLeadId);
+        return NextResponse.json({ error: message }, { status: 500 });
+      }
+    }
+
     // ─── Case A: Register Only Request (Quiz submitted, returns leadId immediately) ──
     if (body.registerOnly) {
       const parseResult = QuizPayloadSchema.safeParse(body.quiz);
